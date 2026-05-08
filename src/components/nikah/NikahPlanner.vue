@@ -2,10 +2,9 @@
   <div>
     <header class="main-header">
       <h1>🕊️ Nikah Planner</h1>
-      <p>Track hantaran, attire, decor and nikah preparation ✨</p>
+      <p>Track hantaran, attire, decor, wishlist and inspiration ✨</p>
     </header>
 
-    <!-- SUMMARY -->
     <div class="summary-grid">
       <div class="summary-card">
         <span>Total Budget</span>
@@ -23,27 +22,11 @@
       </div>
 
       <div class="summary-card">
-        <span>Progress</span>
-        <h2>{{ completionPercent }}%</h2>
+        <span>Urgent</span>
+        <h2>{{ urgentCount }}</h2>
       </div>
     </div>
 
-    <!-- PROGRESS -->
-    <div class="progress-card">
-      <div class="progress-top">
-        <h2>Nikah Preparation Progress</h2>
-        <span>{{ completedCount }} / {{ items.length }}</span>
-      </div>
-
-      <div class="progress-bar">
-        <div
-          class="progress-fill"
-          :style="{ width: `${completionPercent}%` }"
-        ></div>
-      </div>
-    </div>
-
-    <!-- CATEGORY TABS -->
     <div class="tabs">
       <button
         v-for="cat in categories"
@@ -55,19 +38,14 @@
       </button>
     </div>
 
-    <!-- ADD FORM -->
     <div class="form-card">
-      <h2>➕ Add Nikah Item</h2>
+      <h2>{{ editId ? "✏️ Edit Nikah Item" : "➕ Add Nikah Item" }}</h2>
 
       <div class="form-grid">
         <div class="field">
           <label>Category</label>
           <select v-model="form.category">
-            <option
-              v-for="cat in categories"
-              :key="cat.key"
-              :value="cat.key"
-            >
+            <option v-for="cat in categories" :key="cat.key" :value="cat.key">
               {{ cat.label }}
             </option>
           </select>
@@ -75,27 +53,17 @@
 
         <div class="field">
           <label>Item Name</label>
-          <input
-            v-model="form.name"
-            placeholder="Example: Perfume, cincin, MUA"
-          />
+          <input v-model="form.name" placeholder="Example: Perfume, cincin, MUA" />
         </div>
 
         <div class="field">
           <label>Price (RM)</label>
-          <input
-            type="number"
-            v-model.number="form.price"
-            placeholder="Example: 500"
-          />
+          <input type="number" v-model.number="form.price" placeholder="Example: 500" />
         </div>
 
         <div class="field">
           <label>Vendor</label>
-          <input
-            v-model="form.vendor"
-            placeholder="Example: Shopee, vendor name"
-          />
+          <input v-model="form.vendor" placeholder="Example: Shopee, vendor name" />
         </div>
 
         <div class="field">
@@ -108,22 +76,46 @@
             <option value="DONE">DONE</option>
           </select>
         </div>
+
+        <div class="field">
+          <label>Priority</label>
+          <select v-model="form.priority">
+            <option value="LOW">LOW</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="HIGH">HIGH</option>
+            <option value="URGENT">URGENT</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Wishlist / Inspiration Link</label>
+        <input v-model="form.wishlistLink" placeholder="Shopee / TikTok / Pinterest / Instagram link" />
       </div>
 
       <div class="field">
         <label>Details</label>
         <textarea
           v-model="form.details"
-          placeholder="Example: beli kat JPO, size, color theme, notes"
+          placeholder="Example: size, color theme, notes"
         ></textarea>
       </div>
 
-      <button class="save-btn" @click="addItem">
-        + Save Item
-      </button>
+      <div class="form-actions">
+        <button class="save-btn" @click="submitItem">
+          {{ editId ? "Save Changes" : "+ Save Item" }}
+        </button>
+
+        <button
+          v-if="editId"
+          class="cancel-btn"
+          @click="cancelEdit"
+        >
+          Cancel
+        </button>
+      </div>
     </div>
 
-    <!-- CATEGORY SECTION -->
     <div class="category-section">
       <div class="section-header">
         <div>
@@ -151,11 +143,26 @@
             <div>
               <h3>{{ item.name }}</h3>
               <p>{{ item.details || "No details yet" }}</p>
+
+              <a
+                v-if="item.wishlistLink"
+                :href="item.wishlistLink"
+                target="_blank"
+                class="wish-link"
+              >
+                🔗 Open Wishlist / Inspiration
+              </a>
             </div>
 
-            <span class="badge" :class="badgeClass(item.progress)">
-              {{ item.progress }}
-            </span>
+            <div class="badges">
+              <span class="badge" :class="badgeClass(item.progress)">
+                {{ item.progress }}
+              </span>
+
+              <span class="priority" :class="priorityClass(item.priority || 'LOW')">
+                {{ item.priority || "LOW" }}
+              </span>
+            </div>
           </div>
 
           <div class="info-grid">
@@ -170,7 +177,6 @@
             </div>
           </div>
 
-          <!-- FILE UPLOAD + FILE LIST -->
           <div class="file-section">
             <label>Upload inspiration / receipt / picture</label>
 
@@ -190,11 +196,7 @@
                 class="file-row"
               >
                 <div>
-                  <a
-                    :href="file.url"
-                    target="_blank"
-                    class="file-link"
-                  >
+                  <a :href="file.url" target="_blank" class="file-link">
                     {{ isImage(file.type) ? "🖼️" : "📎" }}
                     {{ file.name }}
                   </a>
@@ -216,6 +218,24 @@
             </div>
           </div>
 
+          <div
+            v-if="imageFiles(item).length > 0"
+            class="gallery"
+          >
+            <h4>🖼 Inspiration Gallery</h4>
+
+            <div class="gallery-grid">
+              <a
+                v-for="file in imageFiles(item)"
+                :key="file.url"
+                :href="file.url"
+                target="_blank"
+              >
+                <img :src="file.url" />
+              </a>
+            </div>
+          </div>
+
           <div class="actions">
             <select
               :value="item.progress"
@@ -228,11 +248,12 @@
               <option value="DONE">DONE</option>
             </select>
 
-            <button
-              class="delete-btn"
-              @click="removeItem(item.id!)"
-            >
-              Delete Item
+            <button class="edit-btn" @click="startEdit(item)">
+              Edit
+            </button>
+
+            <button class="delete-btn" @click="removeItem(item.id!)">
+              Delete
             </button>
           </div>
         </div>
@@ -266,8 +287,8 @@ const categories = [
 ];
 
 const selectedCategory = ref("attire");
-
 const items = ref<NikahItem[]>([]);
+const editId = ref<string | null>(null);
 
 const form = ref<NikahItem>({
   category: "attire",
@@ -276,6 +297,8 @@ const form = ref<NikahItem>({
   vendor: "",
   details: "",
   progress: "NOT YET",
+  priority: "LOW",
+  wishlistLink: "",
   files: []
 });
 
@@ -303,23 +326,22 @@ const selectedTotal = computed(() =>
 
 const completedCount = computed(() =>
   items.value.filter(
-    (item) =>
-      item.progress === "DONE" ||
-      item.progress === "PAID"
+    (item) => item.progress === "DONE" || item.progress === "PAID"
   ).length
+);
+
+const urgentCount = computed(() =>
+  items.value.filter((item) => item.priority === "URGENT").length
 );
 
 const completionPercent = computed(() => {
   if (items.value.length === 0) return 0;
-
   return Math.round((completedCount.value / items.value.length) * 100);
 });
 
 const selectedCompletedCount = computed(() =>
   filteredItems.value.filter(
-    (item) =>
-      item.progress === "DONE" ||
-      item.progress === "PAID"
+    (item) => item.progress === "DONE" || item.progress === "PAID"
   ).length
 );
 
@@ -331,15 +353,7 @@ const selectedCompletionPercent = computed(() => {
   );
 });
 
-const addItem = async () => {
-  if (!form.value.name.trim()) return;
-
-  await addNikahItem({
-    ...form.value,
-    price: Number(form.value.price || 0),
-    files: []
-  });
-
+const resetForm = () => {
   form.value = {
     category: selectedCategory.value,
     name: "",
@@ -347,8 +361,65 @@ const addItem = async () => {
     vendor: "",
     details: "",
     progress: "NOT YET",
+    priority: "LOW",
+    wishlistLink: "",
     files: []
   };
+
+  editId.value = null;
+};
+
+const submitItem = async () => {
+  if (!form.value.name.trim()) return;
+
+  if (editId.value) {
+    await updateNikahItem(editId.value, {
+      category: form.value.category,
+      name: form.value.name,
+      price: Number(form.value.price || 0),
+      vendor: form.value.vendor || "",
+      details: form.value.details || "",
+      progress: form.value.progress,
+      priority: form.value.priority || "LOW",
+      wishlistLink: form.value.wishlistLink || ""
+    });
+
+    resetForm();
+    return;
+  }
+
+  await addNikahItem({
+    ...form.value,
+    price: Number(form.value.price || 0),
+    files: []
+  });
+
+  resetForm();
+};
+
+const startEdit = (item: NikahItem) => {
+  editId.value = item.id || null;
+
+  form.value = {
+    category: item.category,
+    name: item.name,
+    price: Number(item.price || 0),
+    vendor: item.vendor || "",
+    details: item.details || "",
+    progress: item.progress,
+    priority: item.priority || "LOW",
+    wishlistLink: item.wishlistLink || "",
+    files: item.files || []
+  };
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+};
+
+const cancelEdit = () => {
+  resetForm();
 };
 
 const uploadFilesForItem = async (
@@ -388,7 +459,6 @@ const removeFileFromItem = async (
   if (!item.id) return;
 
   const updatedFiles = [...(item.files || [])];
-
   updatedFiles.splice(index, 1);
 
   await updateNikahItem(item.id, {
@@ -407,6 +477,14 @@ const updateProgress = async (
   await updateNikahItem(id, { progress });
 };
 
+const isImage = (type: string) => {
+  return type.startsWith("image/");
+};
+
+const imageFiles = (item: NikahItem) => {
+  return (item.files || []).filter((file) => isImage(file.type));
+};
+
 const badgeClass = (progress: string) => {
   if (progress === "DONE") return "done";
   if (progress === "PAID") return "paid";
@@ -415,8 +493,11 @@ const badgeClass = (progress: string) => {
   return "not-yet";
 };
 
-const isImage = (type: string) => {
-  return type.startsWith("image/");
+const priorityClass = (priority: string) => {
+  if (priority === "URGENT") return "urgent";
+  if (priority === "HIGH") return "high";
+  if (priority === "MEDIUM") return "medium";
+  return "low";
 };
 </script>
 
@@ -436,7 +517,6 @@ const isImage = (type: string) => {
   font-size: 18px;
 }
 
-/* SUMMARY */
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -445,7 +525,6 @@ const isImage = (type: string) => {
 }
 
 .summary-card,
-.progress-card,
 .form-card,
 .category-section {
   background: white;
@@ -460,45 +539,6 @@ const isImage = (type: string) => {
   font-size: 13px;
 }
 
-.summary-card h2 {
-  margin: 8px 0 0;
-}
-
-/* PROGRESS */
-.progress-top,
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.progress-top span,
-.section-summary span {
-  font-weight: 800;
-  background: #f5f5f5;
-  padding: 10px 14px;
-  border-radius: 999px;
-}
-
-.section-summary {
-  display: flex;
-  gap: 10px;
-}
-
-.progress-bar {
-  margin-top: 18px;
-  height: 16px;
-  background: #eee;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(135deg, #ffb6c1, #a0c4ff);
-}
-
-/* TABS */
 .tabs {
   display: flex;
   gap: 12px;
@@ -521,7 +561,6 @@ const isImage = (type: string) => {
   color: white;
 }
 
-/* FORM */
 .form-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -558,18 +597,54 @@ const isImage = (type: string) => {
   resize: vertical;
 }
 
-.save-btn {
-  width: 100%;
+.form-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+}
+
+.save-btn,
+.cancel-btn,
+.edit-btn,
+.delete-btn,
+.remove-file-btn {
   border: none;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.save-btn {
   padding: 14px;
   border-radius: 14px;
   background: linear-gradient(135deg, #ffb6c1, #a0c4ff);
   color: white;
-  font-weight: 800;
-  cursor: pointer;
 }
 
-/* ITEMS */
+.cancel-btn {
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: #eee;
+  color: #555;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-summary {
+  display: flex;
+  gap: 10px;
+}
+
+.section-summary span {
+  font-weight: 800;
+  background: #f5f5f5;
+  padding: 10px 14px;
+  border-radius: 999px;
+}
+
 .empty {
   padding: 24px;
   border-radius: 20px;
@@ -578,6 +653,7 @@ const isImage = (type: string) => {
 }
 
 .item-grid {
+  margin-top: 18px;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 18px;
@@ -605,6 +681,74 @@ const isImage = (type: string) => {
 .item-top p {
   color: #777;
   margin-top: 6px;
+}
+
+.wish-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: #d63384;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.badges {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.badge,
+.priority {
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.not-yet {
+  background: #ffe3e3;
+  color: #d33;
+}
+
+.survey {
+  background: #fff2c7;
+  color: #9a6a00;
+}
+
+.booked {
+  background: #e6f0ff;
+  color: #2f6cd6;
+}
+
+.paid {
+  background: #efe6ff;
+  color: #7c3aed;
+}
+
+.done {
+  background: #dfffe8;
+  color: #139447;
+}
+
+.low {
+  background: #eef6ff;
+  color: #2f6cd6;
+}
+
+.medium {
+  background: #fff2c7;
+  color: #9a6a00;
+}
+
+.high {
+  background: #ffe3e3;
+  color: #d33;
+}
+
+.urgent {
+  background: #d63384;
+  color: white;
 }
 
 .info-grid {
@@ -665,68 +809,57 @@ const isImage = (type: string) => {
 }
 
 .remove-file-btn {
-  border: none;
   padding: 8px 12px;
   border-radius: 12px;
   background: #ffe3e3;
   color: #d33;
-  font-weight: 800;
-  cursor: pointer;
 }
 
-/* BADGE */
-.badge {
-  padding: 7px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
+.gallery {
+  background: white;
+  padding: 14px;
+  border-radius: 16px;
+  margin-bottom: 16px;
 }
 
-.not-yet {
-  background: #ffe3e3;
-  color: #d33;
+.gallery h4 {
+  margin-top: 0;
 }
 
-.survey {
-  background: #fff2c7;
-  color: #9a6a00;
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 10px;
 }
 
-.booked {
-  background: #e6f0ff;
-  color: #2f6cd6;
+.gallery-grid img {
+  width: 100%;
+  height: 95px;
+  object-fit: cover;
+  border-radius: 12px;
 }
 
-.paid {
-  background: #efe6ff;
-  color: #7c3aed;
-}
-
-.done {
-  background: #dfffe8;
-  color: #139447;
-}
-
-/* ACTION */
 .actions {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   gap: 12px;
   margin-top: 16px;
 }
 
+.edit-btn {
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: #e6f0ff;
+  color: #2f6cd6;
+}
+
 .delete-btn {
-  border: none;
   padding: 12px 16px;
   border-radius: 14px;
   background: #ffe3e3;
   color: #d33;
-  font-weight: 800;
-  cursor: pointer;
 }
 
-/* MOBILE */
 @media (max-width: 768px) {
   .main-header h1 {
     font-size: 32px;
@@ -743,7 +876,6 @@ const isImage = (type: string) => {
   }
 
   .summary-card,
-  .progress-card,
   .form-card,
   .category-section {
     padding: 20px;
@@ -751,14 +883,19 @@ const isImage = (type: string) => {
   }
 
   .section-header,
-  .progress-top,
+  .item-top,
   .file-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
 
-  .actions {
+  .badges {
+    justify-items: start;
+  }
+
+  .actions,
+  .form-actions {
     grid-template-columns: 1fr;
   }
 }

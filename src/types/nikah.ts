@@ -15,6 +15,9 @@ export interface NikahItem {
   details?: string;
   progress: string;
 
+  priority?: string;
+  wishlistLink?: string;
+
   files?: NikahFile[];
 
   createdAt?: number;
