@@ -66,10 +66,10 @@
 <script setup lang="ts">
 import AppHeader from "@/components/AppHeader.vue";
 
-const startDate = new Date("2024-01-01");
+const startDate = new Date("2024-10-02");
 
-const engagementDate = new Date("2026-06-01"); // change this
-const weddingDate = new Date("2026-12-31"); // change this
+const engagementDate = new Date("2027-10-02"); // change this
+const weddingDate = new Date("2028-12-02"); // change this
 
 const daysTogether = Math.floor(
   (new Date().getTime() - startDate.getTime()) /
