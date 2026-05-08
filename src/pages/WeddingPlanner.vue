@@ -66,8 +66,8 @@
 import { ref } from "vue";
 import AppHeader from "@/components/AppHeader.vue";
 
-const startDate = new Date("2024-01-01");
-const weddingDate = new Date("2026-12-31");
+const startDate = new Date("2024-10-02");
+const weddingDate = new Date("2028-10-02");
 
 const daysTogether = Math.floor(
   (new Date().getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
