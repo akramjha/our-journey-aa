@@ -5,8 +5,8 @@
     <div class="nav-links">
       <RouterLink to="/" class="nav-btn">Dashboard</RouterLink>
       <RouterLink to="/savings" class="nav-btn">Gold Savings</RouterLink>
-      <button class="nav-btn">Wedding Planner</button>
-      <button class="nav-btn">Memories</button>
+      <RouterLink to="/tunang" class="nav-btn">Tunang Planner</RouterLink>
+      <RouterLink to="/checklist" class="nav-btn">Checklist</RouterLink>
     </div>
   </div>
 </template>

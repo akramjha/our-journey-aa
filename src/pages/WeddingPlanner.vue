@@ -2,48 +2,37 @@
   <div class="page">
     <AppHeader />
 
-    <!-- HEADER -->
     <header class="header">
       <h1>💍 Our Wedding Journey</h1>
       <p>Planning forever, together ✨</p>
     </header>
 
-    <!-- ROMANTIC STATS -->
     <div class="grid">
-
-      <!-- DAYS TOGETHER -->
       <div class="card romantic">
         <h2>💖 Days Together</h2>
         <p class="big">{{ daysTogether }} days</p>
         <p class="small">and still counting ❤️</p>
       </div>
 
-      <!-- ENGAGEMENT COUNTDOWN -->
       <div class="card romantic">
         <h2>💍 Engagement Countdown</h2>
         <p class="big">{{ engagementDaysLeft }} days</p>
         <p class="small">until our engagement day ✨</p>
       </div>
 
-      <!-- WEDDING COUNTDOWN -->
       <div class="card romantic">
         <h2>⏳ Wedding Countdown</h2>
         <p class="big">{{ daysLeft }} days</p>
         <p class="small">until our big day 💍</p>
       </div>
 
-      <!-- LOVE NOTE -->
       <div class="card romantic">
         <h2>💌 Love Note</h2>
         <p class="note">{{ todayNote }}</p>
       </div>
-
     </div>
 
-    <!-- MODULES -->
     <div class="module-grid">
-
-      <!-- GOLD SAVINGS -->
       <div class="module-card">
         <h2>💰 Gold Savings</h2>
         <p>Track our wedding gold contributions</p>
@@ -53,17 +42,23 @@
         </button>
       </div>
 
-      <!-- PLACEHOLDER -->
-      <div class="module-card disabled">
-        <h2>📋 Wedding Tasks</h2>
-        <p>Coming soon...</p>
+      <div class="module-card">
+        <h2>💍 Tunang Planner</h2>
+        <p>Plan venue, attire, hantaran, food, decor and services</p>
+
+        <button @click="$router.push('/tunang')">
+          Open Module →
+        </button>
       </div>
 
-      <div class="module-card disabled">
-        <h2>🛒 Wedding Shopping</h2>
-        <p>Coming soon...</p>
-      </div>
+      <div class="module-card">
+        <h2>📑 Borang Checklist</h2>
+        <p>Track nikah documents, forms and submissions</p>
 
+        <button @click="$router.push('/checklist')">
+          Open Module →
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -71,24 +66,24 @@
 <script setup lang="ts">
 import AppHeader from "@/components/AppHeader.vue";
 
-const startDate = new Date("2024-10-02");
+const startDate = new Date("2024-01-01");
 
-const engagementDate = new Date("2027-10-02"); // change this
-const weddingDate = new Date("2028-10-02");
+const engagementDate = new Date("2026-06-01"); // change this
+const weddingDate = new Date("2026-12-31"); // change this
 
 const daysTogether = Math.floor(
   (new Date().getTime() - startDate.getTime()) /
-  (1000 * 60 * 60 * 24)
+    (1000 * 60 * 60 * 24)
 );
 
 const engagementDaysLeft = Math.floor(
   (engagementDate.getTime() - new Date().getTime()) /
-  (1000 * 60 * 60 * 24)
+    (1000 * 60 * 60 * 24)
 );
 
 const daysLeft = Math.floor(
   (weddingDate.getTime() - new Date().getTime()) /
-  (1000 * 60 * 60 * 24)
+    (1000 * 60 * 60 * 24)
 );
 
 const loveNotes = [
@@ -98,29 +93,17 @@ const loveNotes = [
   "Our future looks beautiful together ✨"
 ];
 
-const todayNote =
-  loveNotes[new Date().getDate() % loveNotes.length];
+const todayNote = loveNotes[new Date().getDate() % loveNotes.length];
 </script>
 
 <style scoped>
 .page {
   min-height: 100vh;
   padding: 40px;
-
-  font-family:
-    "Segoe UI",
-    system-ui,
-    sans-serif;
-
-  background:
-    linear-gradient(
-      135deg,
-      #fff7fb,
-      #eef6ff
-    );
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: linear-gradient(135deg, #fff7fb, #eef6ff);
 }
 
-/* HEADER */
 .header {
   text-align: center;
   margin-bottom: 36px;
@@ -136,43 +119,24 @@ const todayNote =
   color: #777;
 }
 
-/* GRID */
 .grid {
   display: grid;
-
-  grid-template-columns:
-    repeat(auto-fit, minmax(240px, 1fr));
-
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 24px;
-
   margin-bottom: 36px;
 }
 
-/* CARD */
 .card {
-  background:
-    rgba(255, 255, 255, 0.75);
-
+  background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(10px);
-
   border-radius: 24px;
-
   padding: 26px;
-
-  box-shadow:
-    0 10px 25px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
 }
 
 .romantic {
-  background:
-    linear-gradient(
-      135deg,
-      #fff0f5,
-      #fffaf0
-    );
-
-  border:
-    1px solid rgba(255, 182, 193, 0.4);
+  background: linear-gradient(135deg, #fff0f5, #fffaf0);
+  border: 1px solid rgba(255, 182, 193, 0.4);
 }
 
 .big {
@@ -190,26 +154,17 @@ const todayNote =
   color: #d63384;
 }
 
-/* MODULE GRID */
 .module-grid {
   display: grid;
-
-  grid-template-columns:
-    repeat(auto-fit, minmax(260px, 1fr));
-
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 24px;
 }
 
-/* MODULE CARD */
 .module-card {
   background: white;
-
   border-radius: 24px;
-
   padding: 28px;
-
-  box-shadow:
-    0 10px 25px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
 }
 
 .module-card h2 {
@@ -218,34 +173,16 @@ const todayNote =
 
 .module-card button {
   margin-top: 18px;
-
   padding: 12px 18px;
-
   border: none;
-
   border-radius: 14px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #ff9a9e,
-      #a0c4ff
-    );
-
+  background: linear-gradient(135deg, #ff9a9e, #a0c4ff);
   color: white;
-
   cursor: pointer;
-
   font-weight: 700;
 }
 
-.disabled {
-  opacity: 0.5;
-}
-
-/* MOBILE */
 @media (max-width: 768px) {
-
   .page {
     padding: 18px;
   }
@@ -282,6 +219,5 @@ const todayNote =
     width: 100%;
     padding: 12px;
   }
-
 }
 </style>

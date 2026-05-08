@@ -1,13 +1,32 @@
 import { createRouter, createWebHistory } from "vue-router";
+
 import WeddingPlanner from "@/pages/WeddingPlanner.vue";
 import SavingsPage from "@/pages/SavingsPage.vue";
+import TunangPlannerPage from "@/pages/TunangPlannerPage.vue";
+import ChecklistPage from "@/pages/ChecklistPage.vue";
 
 const routes = [
-  { path: "/", component: WeddingPlanner },
-  { path: "/savings", component: SavingsPage }
+  {
+    path: "/",
+    component: WeddingPlanner,
+  },
+  {
+    path: "/savings",
+    component: SavingsPage,
+  },
+  {
+    path: "/tunang",
+    component: TunangPlannerPage,
+  },
+  {
+  path: "/checklist",
+  component: ChecklistPage,
+},
 ];
 
-export default createRouter({
+const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 });
+
+export default router;
