@@ -66,8 +66,8 @@
 import { ref } from "vue";
 import AppHeader from "@/components/AppHeader.vue";
 
-const startDate = new Date("2024-10-02");
-const weddingDate = new Date("2028-10-2");
+const startDate = new Date("2024-01-01");
+const weddingDate = new Date("2026-12-31");
 
 const daysTogether = Math.floor(
   (new Date().getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -147,6 +147,14 @@ const mood = ref("happy");
   color: #d63384;
 }
 
+select {
+  width: 100%;
+  max-width: 260px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #eee;
+}
+
 .module-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -177,5 +185,44 @@ const mood = ref("happy");
 
 .disabled {
   opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 18px;
+  }
+
+  .header {
+    margin-bottom: 24px;
+  }
+
+  .header h1 {
+    font-size: 30px;
+  }
+
+  .header p {
+    font-size: 15px;
+  }
+
+  .grid,
+  .module-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .card,
+  .module-card {
+    padding: 20px;
+    border-radius: 22px;
+  }
+
+  .big {
+    font-size: 24px;
+  }
+
+  .module-card button {
+    width: 100%;
+    padding: 12px;
+  }
 }
 </style>

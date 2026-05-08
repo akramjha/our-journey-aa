@@ -17,4 +17,10 @@ import GoldSavings from "@/components/savings/GoldSavings.vue";
   background: linear-gradient(135deg, #fff7fb, #eef6ff);
   font-family: system-ui;
 }
+
+@media (max-width: 768px) {
+  .page {
+    padding: 18px;
+  }
+}
 </style>

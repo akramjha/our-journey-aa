@@ -55,15 +55,31 @@
   color: white;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .navbar {
     flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+    border-radius: 22px;
+    margin-bottom: 24px;
     gap: 16px;
   }
 
+  .logo {
+    font-size: 20px;
+  }
+
   .nav-links {
-    flex-wrap: wrap;
-    justify-content: center;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .nav-btn {
+    text-align: center;
+    padding: 10px 12px;
+    font-size: 13px;
   }
 }
 </style>

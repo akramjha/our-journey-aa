@@ -303,6 +303,7 @@ const akramItems = computed(() =>
 );
 
 const calculateWeight = (item: Contribution) => {
+  if (!item.currentGoldPricePerGram) return 0;
   return item.purchasePrice / item.currentGoldPricePerGram;
 };
 
@@ -315,11 +316,11 @@ const akramWeight = computed(() =>
 );
 
 const ainaSpend = computed(() =>
-  ainaItems.value.reduce((a, b) => a + b.purchasePrice, 0)
+  ainaItems.value.reduce((a, b) => a + Number(b.purchasePrice), 0)
 );
 
 const akramSpend = computed(() =>
-  akramItems.value.reduce((a, b) => a + b.purchasePrice, 0)
+  akramItems.value.reduce((a, b) => a + Number(b.purchasePrice), 0)
 );
 
 const totalWeight = computed(() =>
@@ -510,6 +511,7 @@ const currentGoldValue = computed(() =>
 .table-wrapper {
   margin-top: 26px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 table {
@@ -555,16 +557,70 @@ td {
   text-align: center;
 }
 
-@media (max-width: 900px) {
-  .profile-grid,
-  .overall {
-    grid-template-columns: 1fr;
+@media (max-width: 768px) {
+  .main-header {
+    margin-bottom: 26px;
   }
 
-  .goal-top {
+  .main-header h1 {
+    font-size: 32px;
+  }
+
+  .main-header p {
+    font-size: 15px;
+  }
+
+  .goal-card,
+  .investment-card,
+  .profile-card,
+  .overall-box {
+    padding: 20px;
+    border-radius: 22px;
+  }
+
+  .overall,
+  .profile-grid,
+  .investment-grid,
+  .summary-card {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .goal-top,
+  .profile-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 18px;
+    gap: 14px;
+  }
+
+  .goal-mini,
+  .mini-total {
+    width: fit-content;
+  }
+
+  table {
+    min-width: 520px;
+  }
+
+  th,
+  td {
+    padding: 12px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .field input {
+    padding: 14px;
+    font-size: 16px;
+  }
+
+  .save-btn {
+    padding: 14px;
+    font-size: 15px;
+  }
+
+  .delete-btn {
+    padding: 8px 11px;
   }
 }
 </style>
