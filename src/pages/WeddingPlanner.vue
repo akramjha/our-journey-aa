@@ -59,6 +59,17 @@
           Open Module →
         </button>
       </div>
+      <div class="module-card">
+      <h2>🕊️ Nikah Planner</h2>
+
+      <p>
+        Track hantaran, attire, decor and nikah preparation
+      </p>
+
+      <button @click="$router.push('/nikah')">
+        Open Module →
+      </button>
+    </div>
     </div>
   </div>
 </template>
