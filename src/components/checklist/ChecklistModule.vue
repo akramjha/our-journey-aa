@@ -1,14 +1,11 @@
 <template>
   <div>
-    <!-- HEADER -->
     <header class="main-header">
       <h1>📑 Borang Checklist</h1>
       <p>Track nikah documents, forms and submissions ✨</p>
     </header>
 
-    <!-- SUMMARY -->
     <div class="summary-grid">
-
       <div class="summary-card">
         <span>Total Items</span>
         <h2>{{ items.length }}</h2>
@@ -23,18 +20,12 @@
         <span>Progress</span>
         <h2>{{ completionPercent }}%</h2>
       </div>
-
     </div>
 
-    <!-- PROGRESS -->
     <div class="progress-card">
-
       <div class="progress-top">
         <h2>Checklist Completion</h2>
-
-        <span>
-          {{ completedCount }} / {{ items.length }}
-        </span>
+        <span>{{ completedCount }} / {{ items.length }}</span>
       </div>
 
       <div class="progress-bar">
@@ -43,12 +34,9 @@
           :style="{ width: `${completionPercent}%` }"
         ></div>
       </div>
-
     </div>
 
-    <!-- CATEGORY -->
     <div class="tabs">
-
       <button
         v-for="cat in categories"
         :key="cat.key"
@@ -57,19 +45,14 @@
       >
         {{ cat.icon }} {{ cat.label }}
       </button>
-
     </div>
 
-    <!-- FORM -->
     <div class="form-card">
-
       <h2>➕ Add Checklist Item</h2>
 
       <div class="form-grid">
-
         <div class="field">
           <label>Category</label>
-
           <select v-model="form.category">
             <option
               v-for="cat in categories"
@@ -83,16 +66,11 @@
 
         <div class="field">
           <label>Item</label>
-
-          <input
-            v-model="form.item"
-            placeholder="Example: HIV Test"
-          />
+          <input v-model="form.item" placeholder="Example: HIV Test" />
         </div>
 
         <div class="field">
           <label>Progress</label>
-
           <select v-model="form.progress">
             <option value="NOT YET">NOT YET</option>
             <option value="IN PROGRESS">IN PROGRESS</option>
@@ -101,113 +79,100 @@
             <option value="DONE">DONE</option>
           </select>
         </div>
-
       </div>
 
-      <!-- NOTES -->
       <div class="field">
         <label>Notes</label>
-
         <textarea
           v-model="form.notes"
           placeholder="Any notes or reminders"
         ></textarea>
       </div>
 
-      <button
-        class="save-btn"
-        @click="addItem"
-      >
+      <button class="save-btn" @click="addItem">
         + Save Item
       </button>
-
     </div>
 
-    <!-- ITEMS -->
     <div class="category-section">
-
       <div class="section-header">
-
         <div>
-          <h2>
-            {{ currentCategory?.icon }}
-            {{ currentCategory?.label }}
-          </h2>
-
-          <p>
-            {{ filteredItems.length }} item(s)
-          </p>
+          <h2>{{ currentCategory?.icon }} {{ currentCategory?.label }}</h2>
+          <p>{{ filteredItems.length }} item(s)</p>
         </div>
 
         <span class="section-percent">
           {{ selectedCompletionPercent }}%
         </span>
-
       </div>
 
-      <div
-        v-if="filteredItems.length === 0"
-        class="empty"
-      >
+      <div v-if="filteredItems.length === 0" class="empty">
         No checklist item yet ✨
       </div>
 
-      <!-- CARDS -->
       <div class="item-grid">
-
         <div
           v-for="item in filteredItems"
           :key="item.id"
           class="item-card"
         >
-
           <div class="item-top">
-
             <div>
-
-              <h3>
-                {{ item.item }}
-              </h3>
-
-              <p>
-                {{ item.notes || "No notes yet" }}
-              </p>
-
-              <!-- FILE LINK -->
-              <a
-                v-if="item.fileUrl"
-                :href="getViewUrl(item.fileUrl)"
-                target="_blank"
-                class="file-link"
-              >
-                📎 View Uploaded File
-              </a>
-
-              <!-- FILE UPLOAD -->
-              <div class="upload-row">
-
-                <input
-                  type="file"
-                  @change="uploadFileForItem($event, item.id!)"
-                />
-
-              </div>
-
+              <h3>{{ item.item }}</h3>
+              <p>{{ item.notes || "No notes yet" }}</p>
             </div>
 
-            <!-- STATUS -->
-            <span
-              class="badge"
-              :class="badgeClass(item.progress)"
-            >
+            <span class="badge" :class="badgeClass(item.progress)">
               {{ item.progress }}
             </span>
-
           </div>
 
-          <!-- ACTION -->
-          <div class="actions">
+          <div class="file-section">
+            <label>Upload file / picture for this item</label>
 
+            <input
+              type="file"
+              multiple
+              @change="uploadFilesForItem($event, item)"
+            />
+
+            <div
+              v-if="item.files && item.files.length > 0"
+              class="file-list"
+            >
+              <div
+                v-for="(file, index) in item.files"
+                :key="file.url"
+                class="file-row"
+              >
+                <div>
+                  <a
+                    :href="file.url"
+                    target="_blank"
+                    class="file-link"
+                  >
+                    {{ isImage(file.type) ? "🖼️" : "📎" }}
+                    {{ file.name }}
+                  </a>
+
+                  <img
+                    v-if="isImage(file.type)"
+                    :src="file.url"
+                    class="preview"
+                  />
+                </div>
+
+                <button
+                  class="remove-file-btn"
+                  @click="removeFileFromItem(item, index)"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions">
             <select
               :value="item.progress"
               @change="updateProgress(item.id!, ($event.target as HTMLSelectElement).value)"
@@ -219,30 +184,19 @@
               <option value="DONE">DONE</option>
             </select>
 
-            <button
-              class="delete-btn"
-              @click="removeItem(item.id!)"
-            >
-              Delete
+            <button class="delete-btn" @click="removeItem(item.id!)">
+              Delete Item
             </button>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
 
   </div>
 </template>
 
 <script setup lang="ts">
-import {
-  ref,
-  computed,
-  onMounted
-} from "vue";
+import { ref, computed, onMounted } from "vue";
 
 import {
   addChecklistItem,
@@ -251,128 +205,74 @@ import {
   updateChecklistItem
 } from "@/services/checklistService";
 
-import { uploadToCloudinary }
-from "@/services/uploadService";
+import { uploadToCloudinary } from "@/services/uploadService";
 
-import type { ChecklistItem }
-from "@/types/checklist";
+import type { ChecklistItem, ChecklistFile } from "@/types/checklist";
 
-/* CATEGORY */
 const categories = [
-  {
-    key: "items",
-    label: "Items",
-    icon: "✅"
-  },
-  {
-    key: "borang_aina",
-    label: "Borang Aina",
-    icon: "🌸"
-  },
-  {
-    key: "borang_akram",
-    label: "Borang Akram",
-    icon: "💙"
-  }
+  { key: "items", label: "Items", icon: "✅" },
+  { key: "borang_aina", label: "Borang Aina", icon: "🌸" },
+  { key: "borang_akram", label: "Borang Akram", icon: "💙" }
 ];
 
-const selectedCategory =
-  ref("items");
+const selectedCategory = ref("items");
 
-const items =
-  ref<ChecklistItem[]>([]);
+const items = ref<ChecklistItem[]>([]);
 
-/* FORM */
 const form = ref<ChecklistItem>({
   category: "items",
   item: "",
   progress: "NOT YET",
   notes: "",
-  fileUrl: "",
-  fileName: ""
+  files: []
 });
 
-/* REALTIME */
 onMounted(() => {
-
   listenChecklistItems((data) => {
     items.value = data;
   });
-
 });
 
-/* FILTER */
 const currentCategory = computed(() =>
-  categories.find(
-    (cat) =>
-      cat.key === selectedCategory.value
-  )
+  categories.find((cat) => cat.key === selectedCategory.value)
 );
 
 const filteredItems = computed(() =>
-  items.value.filter(
-    (item) =>
-      item.category === selectedCategory.value
-  )
+  items.value.filter((item) => item.category === selectedCategory.value)
 );
 
-/* PROGRESS */
 const completedCount = computed(() =>
   items.value.filter(
-    (item) =>
-      item.progress === "DONE" ||
-      item.progress === "APPROVED"
+    (item) => item.progress === "DONE" || item.progress === "APPROVED"
   ).length
 );
 
 const completionPercent = computed(() => {
+  if (items.value.length === 0) return 0;
 
-  if (items.value.length === 0)
-    return 0;
-
-  return Math.round(
-    (
-      completedCount.value /
-      items.value.length
-    ) * 100
-  );
-
+  return Math.round((completedCount.value / items.value.length) * 100);
 });
 
-const selectedCompletedCount =
-computed(() =>
+const selectedCompletedCount = computed(() =>
   filteredItems.value.filter(
-    (item) =>
-      item.progress === "DONE" ||
-      item.progress === "APPROVED"
+    (item) => item.progress === "DONE" || item.progress === "APPROVED"
   ).length
 );
 
-const selectedCompletionPercent =
-computed(() => {
-
-  if (filteredItems.value.length === 0)
-    return 0;
+const selectedCompletionPercent = computed(() => {
+  if (filteredItems.value.length === 0) return 0;
 
   return Math.round(
-    (
-      selectedCompletedCount.value /
-      filteredItems.value.length
-    ) * 100
+    (selectedCompletedCount.value / filteredItems.value.length) * 100
   );
-
 });
 
-/* ADD ITEM */
 const addItem = async () => {
-
-  if (!form.value.item.trim())
-    return;
+  if (!form.value.item.trim()) return;
 
   await addChecklistItem({
     ...form.value,
-    fileUrl: "",
-    fileName: ""
+    files: []
   });
 
   form.value = {
@@ -380,97 +280,77 @@ const addItem = async () => {
     item: "",
     progress: "NOT YET",
     notes: "",
-    fileUrl: "",
-    fileName: ""
+    files: []
   };
-
 };
 
-/* UPLOAD FILE */
-const uploadFileForItem = async (
+const uploadFilesForItem = async (
   event: Event,
-  id: string
+  item: ChecklistItem
 ) => {
+  const target = event.target as HTMLInputElement;
+  const files = Array.from(target.files || []);
 
-  const target =
-    event.target as HTMLInputElement;
+  if (!item.id || files.length === 0) return;
 
-  const file =
-    target.files?.[0];
+  const uploadedFiles: ChecklistFile[] = [];
 
-  if (!file) return;
+  for (const file of files) {
+    const uploaded = await uploadToCloudinary(file);
 
-  const uploaded =
-    await uploadToCloudinary(file);
+    uploadedFiles.push({
+      url: uploaded.url,
+      name: uploaded.name,
+      type: uploaded.type
+    });
+  }
 
-  await updateChecklistItem(id, {
-    fileUrl: uploaded.url,
-    fileName: uploaded.name
+  const existingFiles = item.files || [];
+
+  await updateChecklistItem(item.id, {
+    files: [...existingFiles, ...uploadedFiles]
   });
 
   target.value = "";
-
 };
 
-/* VIEW URL */
-const getViewUrl = (
-  url: string
+const removeFileFromItem = async (
+  item: ChecklistItem,
+  index: number
 ) => {
+  if (!item.id) return;
 
-  if (url.includes("/raw/upload/")) {
+  const updatedFiles = [...(item.files || [])];
 
-    return url.replace(
-      "/raw/upload/",
-      "/raw/upload/fl_attachment/"
-    );
+  updatedFiles.splice(index, 1);
 
-  }
-
-  return url;
-
+  await updateChecklistItem(item.id, {
+    files: updatedFiles
+  });
 };
 
-/* DELETE */
-const removeItem = async (
-  id: string
-) => {
-
+const removeItem = async (id: string) => {
   await deleteChecklistItem(id);
-
 };
 
-/* UPDATE */
 const updateProgress = async (
   id: string,
   progress: string
 ) => {
-
-  await updateChecklistItem(
-    id,
-    { progress }
-  );
-
+  await updateChecklistItem(id, { progress });
 };
 
-/* BADGE */
-const badgeClass = (
-  progress: string
-) => {
-
-  if (progress === "DONE")
-    return "done";
-
-  if (progress === "APPROVED")
-    return "approved";
-
-  if (progress === "SUBMITTED")
-    return "submitted";
-
-  if (progress === "IN PROGRESS")
-    return "progress";
+const badgeClass = (progress: string) => {
+  if (progress === "DONE") return "done";
+  if (progress === "APPROVED") return "approved";
+  if (progress === "SUBMITTED") return "submitted";
+  if (progress === "IN PROGRESS") return "progress";
 
   return "not-yet";
+};
 
+const isImage = (type: string) => {
+  return type.startsWith("image/");
 };
 </script>
 
@@ -490,7 +370,6 @@ const badgeClass = (
   font-size: 18px;
 }
 
-/* SUMMARY */
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -498,12 +377,15 @@ const badgeClass = (
   margin-bottom: 28px;
 }
 
-.summary-card {
+.summary-card,
+.progress-card,
+.form-card,
+.category-section {
   background: white;
-  padding: 24px;
-  border-radius: 24px;
-  box-shadow:
-    0 10px 24px rgba(0,0,0,0.05);
+  padding: 26px;
+  border-radius: 26px;
+  margin-bottom: 28px;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.05);
 }
 
 .summary-card span {
@@ -511,24 +393,19 @@ const badgeClass = (
   font-size: 13px;
 }
 
-/* PROGRESS */
-.progress-card {
-  background: white;
-  padding: 26px;
-  border-radius: 26px;
-  margin-bottom: 28px;
-  box-shadow:
-    0 10px 24px rgba(0,0,0,0.05);
-}
-
-.progress-top {
+.progress-top,
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.progress-top span {
+.progress-top span,
+.section-percent {
   font-weight: 800;
+  background: #f5f5f5;
+  padding: 10px 14px;
+  border-radius: 999px;
 }
 
 .progress-bar {
@@ -541,15 +418,9 @@ const badgeClass = (
 
 .progress-fill {
   height: 100%;
-  background:
-    linear-gradient(
-      135deg,
-      #ffb6c1,
-      #a0c4ff
-    );
+  background: linear-gradient(135deg, #ffb6c1, #a0c4ff);
 }
 
-/* TABS */
 .tabs {
   display: flex;
   gap: 12px;
@@ -567,25 +438,8 @@ const badgeClass = (
 }
 
 .tabs button.active {
-  background:
-    linear-gradient(
-      135deg,
-      #ffb6c1,
-      #a0c4ff
-    );
-
+  background: linear-gradient(135deg, #ffb6c1, #a0c4ff);
   color: white;
-}
-
-/* FORM */
-.form-card,
-.category-section {
-  background: white;
-  padding: 28px;
-  border-radius: 28px;
-  margin-bottom: 28px;
-  box-shadow:
-    0 10px 24px rgba(0,0,0,0.05);
 }
 
 .form-grid {
@@ -598,7 +452,8 @@ const badgeClass = (
   margin-bottom: 16px;
 }
 
-.field label {
+.field label,
+.file-section label {
   display: block;
   margin-bottom: 8px;
   font-size: 13px;
@@ -608,7 +463,8 @@ const badgeClass = (
 .field input,
 .field select,
 .field textarea,
-.actions select {
+.actions select,
+.file-section input {
   width: 100%;
   padding: 13px;
   border-radius: 14px;
@@ -627,31 +483,10 @@ const badgeClass = (
   border: none;
   padding: 14px;
   border-radius: 14px;
-  background:
-    linear-gradient(
-      135deg,
-      #ffb6c1,
-      #a0c4ff
-    );
-
+  background: linear-gradient(135deg, #ffb6c1, #a0c4ff);
   color: white;
   font-weight: 800;
   cursor: pointer;
-}
-
-/* ITEMS */
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-}
-
-.section-percent {
-  background: #f5f5f5;
-  padding: 10px 14px;
-  border-radius: 999px;
-  font-weight: 800;
 }
 
 .empty {
@@ -663,9 +498,7 @@ const badgeClass = (
 
 .item-grid {
   display: grid;
-  grid-template-columns:
-    repeat(auto-fit, minmax(280px, 1fr));
-
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 18px;
 }
 
@@ -673,8 +506,7 @@ const badgeClass = (
   background: #fff7fb;
   padding: 20px;
   border-radius: 22px;
-  border:
-    1px solid rgba(255, 182, 193, 0.35);
+  border: 1px solid rgba(255, 182, 193, 0.35);
 }
 
 .item-top {
@@ -694,33 +526,59 @@ const badgeClass = (
   margin-top: 6px;
 }
 
+.file-section {
+  margin: 16px 0;
+  background: white;
+  padding: 14px;
+  border-radius: 16px;
+}
+
+.file-list {
+  margin-top: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.file-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  background: #fff7fb;
+  padding: 12px;
+  border-radius: 14px;
+}
+
 .file-link {
-  display: inline-block;
-  margin-top: 10px;
   color: #d63384;
   font-weight: 700;
   text-decoration: none;
+  word-break: break-word;
 }
 
-/* UPLOAD */
-.upload-row {
-  margin-top: 12px;
-}
-
-.upload-row input {
-  width: 100%;
-  padding: 10px;
+.preview {
+  display: block;
+  margin-top: 10px;
+  max-width: 120px;
   border-radius: 12px;
-  background: white;
-  border: 1px solid #eee;
 }
 
-/* BADGE */
+.remove-file-btn {
+  border: none;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #ffe3e3;
+  color: #d33;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .badge {
   padding: 7px 10px;
   border-radius: 999px;
   font-size: 11px;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .not-yet {
@@ -748,7 +606,6 @@ const badgeClass = (
   color: #139447;
 }
 
-/* ACTION */
 .actions {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -765,9 +622,7 @@ const badgeClass = (
   cursor: pointer;
 }
 
-/* MOBILE */
 @media (max-width: 768px) {
-
   .main-header h1 {
     font-size: 32px;
   }
@@ -781,16 +636,17 @@ const badgeClass = (
     grid-template-columns: 1fr;
   }
 
-  .form-card,
-  .category-section,
   .summary-card,
-  .progress-card {
+  .progress-card,
+  .form-card,
+  .category-section {
     padding: 20px;
     border-radius: 22px;
   }
 
   .section-header,
-  .progress-top {
+  .progress-top,
+  .file-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
@@ -799,6 +655,5 @@ const badgeClass = (
   .actions {
     grid-template-columns: 1fr;
   }
-
 }
 </style>

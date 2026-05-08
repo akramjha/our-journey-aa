@@ -1,26 +1,14 @@
-export const uploadToCloudinary = async (
-  file: File
-) => {
-
+export const uploadToCloudinary = async (file: File) => {
   const formData = new FormData();
 
   formData.append("file", file);
+  formData.append("upload_preset", "checklist_upload");
 
-  formData.append(
-    "upload_preset",
-    "checklist_upload"
-  );
-
-  /* CHECK FILE TYPE */
-  const isPdf =
-    file.type === "application/pdf";
-
-  const endpoint = isPdf
-    ? "raw"
-    : "image";
+  const isPdf = file.type === "application/pdf";
+  const endpoint = isPdf ? "raw" : "image";
 
   const response = await fetch(
-    `https://api.cloudinary.com/v1_1/drqnbwdzs/${endpoint}/upload`,
+    "https://api.cloudinary.com/v1_1/drqnbwdzs/" + endpoint + "/upload",
     {
       method: "POST",
       body: formData
@@ -35,7 +23,7 @@ export const uploadToCloudinary = async (
 
   return {
     url: data.secure_url,
-    name: file.name
+    name: file.name,
+    type: file.type
   };
-
 };

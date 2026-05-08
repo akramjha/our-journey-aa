@@ -1,3 +1,9 @@
+export interface ChecklistFile {
+  url: string;
+  name: string;
+  type: string;
+}
+
 export interface ChecklistItem {
   id?: string;
 
@@ -7,8 +13,7 @@ export interface ChecklistItem {
 
   notes?: string;
 
-  fileUrl?: string;
-  fileName?: string;
+  files?: ChecklistFile[];
 
   createdAt?: number;
 }
