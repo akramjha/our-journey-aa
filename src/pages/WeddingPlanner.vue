@@ -61,12 +61,18 @@
       </div>
       <div class="module-card">
       <h2>🕊️ Nikah Planner</h2>
-
       <p>
         Track hantaran, attire, decor and nikah preparation
       </p>
-
       <button @click="$router.push('/nikah')">
+        Open Module →
+      </button>
+    </div>
+    <div class="module-card">
+      <h2>👰🏻‍♀️🤵🏻 Wedding Event</h2>
+      <p>Plan venue, booth, decor, doorgift and wedding day services</p>
+
+      <button @click="$router.push('/wedding')">
         Open Module →
       </button>
     </div>

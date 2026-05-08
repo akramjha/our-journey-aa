@@ -1,33 +1,51 @@
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  deleteDoc,
+  updateDoc,
+  doc,
+  query,
+  orderBy
+} from "firebase/firestore";
+
 import { db } from "@/firebase/firebase";
-import { collection, getDocs } from "firebase/firestore";
-import type { WeddingSavings } from "@/types/wedding";
+import type { WeddingEventItem } from "@/types/wedding";
 
-// 💰 SAVINGS
-export const getSavings = async (): Promise<WeddingSavings[]> => {
-  const snapshot = await getDocs(collection(db, "wedding_savings"));
+const COLLECTION_NAME = "weddingEventPlanner";
 
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...(doc.data() as Omit<WeddingSavings, "id">)
-  }));
+export const addWeddingItem = async (data: WeddingEventItem) => {
+  await addDoc(collection(db, COLLECTION_NAME), {
+    ...data,
+    createdAt: Date.now()
+  });
 };
 
-// 📋 TASKS
-export const getTasks = async () => {
-  const snapshot = await getDocs(collection(db, "wedding_tasks"));
+export const listenWeddingItems = (
+  callback: (items: WeddingEventItem[]) => void
+) => {
+  const q = query(
+    collection(db, COLLECTION_NAME),
+    orderBy("createdAt", "desc")
+  );
 
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
+  return onSnapshot(q, (snapshot) => {
+    const items = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data()
+    })) as WeddingEventItem[];
+
+    callback(items);
+  });
 };
 
-// 🛒 SHOPPING
-export const getShopping = async () => {
-  const snapshot = await getDocs(collection(db, "wedding_shopping"));
+export const deleteWeddingItem = async (id: string) => {
+  await deleteDoc(doc(db, COLLECTION_NAME, id));
+};
 
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
+export const updateWeddingItem = async (
+  id: string,
+  data: Partial<WeddingEventItem>
+) => {
+  await updateDoc(doc(db, COLLECTION_NAME, id), data);
 };

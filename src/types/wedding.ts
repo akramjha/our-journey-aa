@@ -1,26 +1,24 @@
-export interface WeddingSavings {
-  id?: string;
-  target: number;
-  saved: number;
+export interface WeddingFile {
+  url: string;
+  name: string;
+  type: string;
 }
 
-export interface WeddingTask {
+export interface WeddingEventItem {
   id?: string;
-  title: string;
-  phase: "foundation" | "planning" | "preparation" | "final";
-  completed: boolean;
-}
 
-export interface WeddingShopping {
-  id?: string;
-  item: string;
-  price: number;
   category: string;
-  bought: boolean;
-}
+  name: string;
 
-export interface WeddingSavings {
-  id?: string;
-  target: number;
-  saved: number;
+  quantity?: number;
+  price: number;
+  vendor?: string;
+  details?: string;
+  progress: string;
+  priority?: string;
+  wishlistLink?: string;
+
+  files?: WeddingFile[];
+
+  createdAt?: number;
 }

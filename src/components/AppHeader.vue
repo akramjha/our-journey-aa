@@ -5,8 +5,10 @@
     <div class="nav-links">
       <RouterLink to="/" class="nav-btn">Dashboard</RouterLink>
       <RouterLink to="/savings" class="nav-btn">Gold Savings</RouterLink>
-      <RouterLink to="/tunang" class="nav-btn">Tunang Planner</RouterLink>
+      <RouterLink to="/tunang" class="nav-btn">Tunang</RouterLink>
       <RouterLink to="/checklist" class="nav-btn">Checklist</RouterLink>
+      <RouterLink to="/nikah" class="nav-btn">Nikah</RouterLink>
+      <RouterLink to="/wedding" class="nav-btn">Wedding</RouterLink>
     </div>
   </div>
 </template>
@@ -31,13 +33,14 @@
 
 .nav-links {
   display: flex;
-  gap: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .nav-btn {
   border: none;
   text-decoration: none;
-  padding: 12px 18px;
+  padding: 11px 15px;
   border-radius: 999px;
   background: transparent;
   color: #444;

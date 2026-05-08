@@ -5,6 +5,7 @@ import SavingsPage from "@/pages/SavingsPage.vue";
 import TunangPlannerPage from "@/pages/TunangPlannerPage.vue";
 import ChecklistPage from "@/pages/ChecklistPage.vue";
 import NikahPage from "@/pages/NikahPage.vue";
+import WeddingEventPage from "@/pages/WeddingEventPage.vue";
 
 const routes = [
   {
@@ -26,6 +27,10 @@ const routes = [
 {
   path: "/nikah",
   component: NikahPage
+},
+{
+  path: "/wedding",
+  component: WeddingEventPage,
 },
 ];
 
