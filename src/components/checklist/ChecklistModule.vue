@@ -79,6 +79,11 @@
             <option value="DONE">DONE</option>
           </select>
         </div>
+
+        <div class="field">
+          <label>Due Date</label>
+          <input type="date" v-model="form.dueDate" />
+        </div>
       </div>
 
       <div class="field">
@@ -115,17 +120,34 @@
           v-for="item in filteredItems"
           :key="item.id"
           class="item-card"
+          :class="{ completed: isCompleted(item) }"
         >
           <div class="item-top">
             <div>
               <h3>{{ item.item }}</h3>
               <p>{{ item.notes || "No notes yet" }}</p>
+
+              <p v-if="item.dueDate" class="due-date">
+                📅 Due: {{ formatDate(item.dueDate) }}
+              </p>
             </div>
 
             <span class="badge" :class="badgeClass(item.progress)">
               {{ item.progress }}
             </span>
           </div>
+
+          <label class="complete-row">
+            <input
+              type="checkbox"
+              :checked="isCompleted(item)"
+              @change="toggleCompleted(item)"
+            />
+
+            <span>
+              {{ isCompleted(item) ? "Completed" : "Mark as completed" }}
+            </span>
+          </label>
 
           <div class="file-section">
             <label>Upload file / picture for this item</label>
@@ -224,7 +246,9 @@ const form = ref<ChecklistItem>({
   item: "",
   progress: "NOT YET",
   notes: "",
-  files: []
+  files: [],
+  completed: false,
+  dueDate: ""
 });
 
 onMounted(() => {
@@ -232,6 +256,14 @@ onMounted(() => {
     items.value = data;
   });
 });
+
+const isCompleted = (item: ChecklistItem) => {
+  return (
+    item.completed === true ||
+    item.progress === "DONE" ||
+    item.progress === "APPROVED"
+  );
+};
 
 const currentCategory = computed(() =>
   categories.find((cat) => cat.key === selectedCategory.value)
@@ -242,21 +274,16 @@ const filteredItems = computed(() =>
 );
 
 const completedCount = computed(() =>
-  items.value.filter(
-    (item) => item.progress === "DONE" || item.progress === "APPROVED"
-  ).length
+  items.value.filter((item) => isCompleted(item)).length
 );
 
 const completionPercent = computed(() => {
   if (items.value.length === 0) return 0;
-
   return Math.round((completedCount.value / items.value.length) * 100);
 });
 
 const selectedCompletedCount = computed(() =>
-  filteredItems.value.filter(
-    (item) => item.progress === "DONE" || item.progress === "APPROVED"
-  ).length
+  filteredItems.value.filter((item) => isCompleted(item)).length
 );
 
 const selectedCompletionPercent = computed(() => {
@@ -272,6 +299,8 @@ const addItem = async () => {
 
   await addChecklistItem({
     ...form.value,
+    completed:
+      form.value.progress === "DONE" || form.value.progress === "APPROVED",
     files: []
   });
 
@@ -280,8 +309,28 @@ const addItem = async () => {
     item: "",
     progress: "NOT YET",
     notes: "",
-    files: []
+    files: [],
+    completed: false,
+    dueDate: ""
   };
+};
+
+const toggleCompleted = async (item: ChecklistItem) => {
+  if (!item.id) return;
+
+  const newCompleted = !isCompleted(item);
+
+  await updateChecklistItem(item.id, {
+    completed: newCompleted,
+    progress: newCompleted ? "DONE" : "NOT YET"
+  });
+};
+
+const updateProgress = async (id: string, progress: string) => {
+  await updateChecklistItem(id, {
+    progress,
+    completed: progress === "DONE" || progress === "APPROVED"
+  });
 };
 
 const uploadFilesForItem = async (
@@ -321,7 +370,6 @@ const removeFileFromItem = async (
   if (!item.id) return;
 
   const updatedFiles = [...(item.files || [])];
-
   updatedFiles.splice(index, 1);
 
   await updateChecklistItem(item.id, {
@@ -331,13 +379,6 @@ const removeFileFromItem = async (
 
 const removeItem = async (id: string) => {
   await deleteChecklistItem(id);
-};
-
-const updateProgress = async (
-  id: string,
-  progress: string
-) => {
-  await updateChecklistItem(id, { progress });
 };
 
 const badgeClass = (progress: string) => {
@@ -351,6 +392,16 @@ const badgeClass = (progress: string) => {
 
 const isImage = (type: string) => {
   return type.startsWith("image/");
+};
+
+const formatDate = (date: string) => {
+  if (!date) return "-";
+
+  return new Date(date).toLocaleDateString("en-MY", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  });
 };
 </script>
 
@@ -444,7 +495,7 @@ const isImage = (type: string) => {
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
@@ -509,6 +560,16 @@ const isImage = (type: string) => {
   border: 1px solid rgba(255, 182, 193, 0.35);
 }
 
+.item-card.completed {
+  background: #f3fff6;
+  border-color: rgba(19, 148, 71, 0.25);
+}
+
+.item-card.completed h3 {
+  text-decoration: line-through;
+  color: #139447;
+}
+
 .item-top {
   display: flex;
   justify-content: space-between;
@@ -524,6 +585,31 @@ const isImage = (type: string) => {
 .item-top p {
   color: #777;
   margin-top: 6px;
+}
+
+.due-date {
+  display: inline-block;
+  margin-top: 8px;
+  color: #d63384 !important;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.complete-row {
+  margin: 12px 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #777;
+  cursor: pointer;
+  user-select: none;
+}
+
+.complete-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: #ff7eb3;
 }
 
 .file-section {

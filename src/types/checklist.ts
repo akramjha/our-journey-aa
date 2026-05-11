@@ -8,7 +8,9 @@ export interface ChecklistItem {
   id?: string;
 
   category: string;
+
   item: string;
+
   progress: string;
 
   notes?: string;
@@ -16,4 +18,8 @@ export interface ChecklistItem {
   files?: ChecklistFile[];
 
   createdAt?: number;
+
+  completed?: boolean;
+
+  dueDate?: string;
 }

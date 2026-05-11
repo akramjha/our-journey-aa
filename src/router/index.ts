@@ -6,6 +6,7 @@ import TunangPlannerPage from "@/pages/TunangPlannerPage.vue";
 import ChecklistPage from "@/pages/ChecklistPage.vue";
 import NikahPage from "@/pages/NikahPage.vue";
 import WeddingEventPage from "@/pages/WeddingEventPage.vue";
+import CoupleSettings from "@/views/CoupleSettings.vue";
 
 const routes = [
   {
@@ -31,6 +32,10 @@ const routes = [
 {
   path: "/wedding",
   component: WeddingEventPage,
+},
+{
+  path: "/settings",
+  component: CoupleSettings
 },
 ];
 

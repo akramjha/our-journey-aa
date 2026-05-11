@@ -20,13 +20,11 @@ export const addTunangItem = async (
   data: TunangItem
 ) => {
 
-  await addDoc(
-    collection(db, COLLECTION_NAME),
-    {
-      ...data,
-      createdAt: Date.now()
-    }
-  );
+  await addDoc(collection(db, COLLECTION_NAME), {
+    ...data,
+    completed: false,
+    createdAt: Date.now(),
+  });
 
 };
 

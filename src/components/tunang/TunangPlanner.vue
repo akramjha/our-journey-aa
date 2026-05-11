@@ -5,7 +5,6 @@
       <p>Plan everything nicely, one step at a time ✨</p>
     </header>
 
-    <!-- SUMMARY -->
     <div class="summary-grid">
       <div class="summary-card">
         <span>Total Budget</span>
@@ -23,7 +22,6 @@
       </div>
     </div>
 
-    <!-- CATEGORY TABS -->
     <div class="tabs">
       <button
         v-for="cat in categories"
@@ -35,7 +33,6 @@
       </button>
     </div>
 
-    <!-- ADD FORM -->
     <div class="form-card">
       <h2>➕ Add Item</h2>
 
@@ -43,11 +40,7 @@
         <div class="field">
           <label>Category</label>
           <select v-model="form.category">
-            <option
-              v-for="cat in categories"
-              :key="cat.key"
-              :value="cat.key"
-            >
+            <option v-for="cat in categories" :key="cat.key" :value="cat.key">
               {{ cat.label }}
             </option>
           </select>
@@ -83,6 +76,11 @@
             <option value="DONE">DONE</option>
           </select>
         </div>
+
+        <div class="field">
+          <label>Due Date</label>
+          <input type="date" v-model="form.dueDate" />
+        </div>
       </div>
 
       <div class="field">
@@ -95,7 +93,6 @@
       </button>
     </div>
 
-    <!-- LIST -->
     <div class="category-section">
       <div class="section-header">
         <h2>{{ currentCategory?.icon }} {{ currentCategory?.label }}</h2>
@@ -110,18 +107,34 @@
         <div
           v-for="item in filteredItems"
           :key="item.id"
-          class="item-card"
+          :class="['item-card', { completed: isCompleted(item) }]"
         >
           <div class="item-top">
             <div>
               <h3>{{ item.name }}</h3>
               <p>{{ item.details || "No details" }}</p>
+
+              <p v-if="item.dueDate" class="due-date">
+                📅 Due: {{ formatDate(item.dueDate) }}
+              </p>
             </div>
 
             <span class="badge" :class="badgeClass(item.progress)">
               {{ item.progress }}
             </span>
           </div>
+
+          <label class="complete-row">
+            <input
+              type="checkbox"
+              :checked="isCompleted(item)"
+              @change="toggleCompleted(item)"
+            />
+
+            <span>
+              {{ isCompleted(item) ? "Completed" : "Mark as completed" }}
+            </span>
+          </label>
 
           <div class="item-info">
             <div>
@@ -165,6 +178,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+
 import {
   addTunangItem,
   listenTunangItems,
@@ -195,7 +209,9 @@ const form = ref<TunangItem>({
   quantity: undefined,
   vendor: "",
   details: "",
-  progress: "NOT YET"
+  progress: "NOT YET",
+  completed: false,
+  dueDate: ""
 });
 
 onMounted(() => {
@@ -203,6 +219,14 @@ onMounted(() => {
     items.value = data;
   });
 });
+
+const isCompleted = (item: TunangItem) => {
+  return (
+    item.completed === true ||
+    item.progress === "DONE" ||
+    item.progress === "PAID"
+  );
+};
 
 const currentCategory = computed(() =>
   categories.find((cat) => cat.key === selectedCategory.value)
@@ -221,16 +245,20 @@ const selectedTotal = computed(() =>
 );
 
 const completedCount = computed(() =>
-  items.value.filter((item) => item.progress === "DONE").length
+  items.value.filter((item) => isCompleted(item)).length
 );
 
 const addItem = async () => {
   if (!form.value.name.trim()) return;
 
+  const completed =
+    form.value.progress === "DONE" || form.value.progress === "PAID";
+
   await addTunangItem({
     ...form.value,
     price: Number(form.value.price || 0),
-    quantity: form.value.quantity || undefined
+    quantity: form.value.quantity || undefined,
+    completed
   });
 
   form.value = {
@@ -240,8 +268,21 @@ const addItem = async () => {
     quantity: undefined,
     vendor: "",
     details: "",
-    progress: "NOT YET"
+    progress: "NOT YET",
+    completed: false,
+    dueDate: ""
   };
+};
+
+const toggleCompleted = async (item: TunangItem) => {
+  if (!item.id) return;
+
+  const newCompleted = !isCompleted(item);
+
+  await updateTunangItem(item.id, {
+    completed: newCompleted,
+    progress: newCompleted ? "DONE" : "NOT YET"
+  });
 };
 
 const removeItem = async (id: string) => {
@@ -249,7 +290,10 @@ const removeItem = async (id: string) => {
 };
 
 const updateProgress = async (id: string, progress: string) => {
-  await updateTunangItem(id, { progress });
+  await updateTunangItem(id, {
+    progress,
+    completed: progress === "DONE" || progress === "PAID"
+  });
 };
 
 const badgeClass = (progress: string) => {
@@ -258,6 +302,16 @@ const badgeClass = (progress: string) => {
   if (progress === "BOOKED") return "booked";
   if (progress === "PLANNING") return "planning";
   return "not-yet";
+};
+
+const formatDate = (date: string) => {
+  if (!date) return "-";
+
+  return new Date(date).toLocaleDateString("en-MY", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  });
 };
 </script>
 
@@ -333,7 +387,7 @@ const badgeClass = (progress: string) => {
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
@@ -409,6 +463,33 @@ const badgeClass = (progress: string) => {
   border: 1px solid rgba(255, 182, 193, 0.35);
 }
 
+.item-card.completed {
+  background: #f3fff6;
+  border-color: rgba(19, 148, 71, 0.25);
+}
+
+.item-card.completed h3 {
+  text-decoration: line-through;
+  color: #139447;
+}
+
+.complete-row {
+  margin: 12px 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #777;
+  cursor: pointer;
+  user-select: none;
+}
+
+.complete-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: #ff7eb3;
+}
+
 .item-top {
   display: flex;
   justify-content: space-between;
@@ -424,6 +505,14 @@ const badgeClass = (progress: string) => {
 .item-top p {
   color: #777;
   margin-top: 6px;
+}
+
+.due-date {
+  display: inline-block;
+  margin-top: 8px;
+  color: #d63384 !important;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .badge {
@@ -517,10 +606,11 @@ const badgeClass = (progress: string) => {
     border-radius: 22px;
   }
 
-  .section-header {
+  .section-header,
+  .item-top {
     flex-direction: column;
     align-items: flex-start;
-    gap: 6px;
+    gap: 8px;
   }
 
   .actions {

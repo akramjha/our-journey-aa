@@ -76,6 +76,10 @@
             <option value="DONE">DONE</option>
           </select>
         </div>
+        <div class="field">
+          <label>Due Date</label>
+          <input type="date" v-model="form.dueDate" />
+        </div>
 
         <div class="field">
           <label>Priority</label>
@@ -106,11 +110,7 @@
           {{ editId ? "Save Changes" : "+ Save Item" }}
         </button>
 
-        <button
-          v-if="editId"
-          class="cancel-btn"
-          @click="cancelEdit"
-        >
+        <button v-if="editId" class="cancel-btn" @click="cancelEdit">
           Cancel
         </button>
       </div>
@@ -137,7 +137,7 @@
         <div
           v-for="item in filteredItems"
           :key="item.id"
-          class="item-card"
+          :class="['item-card', { completed: isCompleted(item) }]"
         >
           <div class="item-top">
             <div>
@@ -165,6 +165,18 @@
             </div>
           </div>
 
+          <label class="complete-row">
+            <input
+              type="checkbox"
+              :checked="isCompleted(item)"
+              @change="toggleCompleted(item)"
+            />
+
+            <span>
+              {{ isCompleted(item) ? "Completed" : "Mark as completed" }}
+            </span>
+          </label>
+
           <div class="info-grid">
             <div>
               <span>Price</span>
@@ -186,10 +198,7 @@
               @change="uploadFilesForItem($event, item)"
             />
 
-            <div
-              v-if="item.files && item.files.length > 0"
-              class="file-list"
-            >
+            <div v-if="item.files && item.files.length > 0" class="file-list">
               <div
                 v-for="(file, index) in item.files"
                 :key="file.url"
@@ -218,10 +227,7 @@
             </div>
           </div>
 
-          <div
-            v-if="imageFiles(item).length > 0"
-            class="gallery"
-          >
+          <div v-if="imageFiles(item).length > 0" class="gallery">
             <h4>🖼 Inspiration Gallery</h4>
 
             <div class="gallery-grid">
@@ -274,7 +280,6 @@ import {
 } from "@/services/nikahService";
 
 import { uploadToCloudinary } from "@/services/uploadService";
-
 import type { NikahItem, NikahFile } from "@/types/nikah";
 
 const categories = [
@@ -299,7 +304,9 @@ const form = ref<NikahItem>({
   progress: "NOT YET",
   priority: "LOW",
   wishlistLink: "",
-  files: []
+  files: [],
+  dueDate: "",
+  completed: false,
 });
 
 onMounted(() => {
@@ -307,6 +314,14 @@ onMounted(() => {
     items.value = data;
   });
 });
+
+const isCompleted = (item: NikahItem) => {
+  return (
+    item.completed === true ||
+    item.progress === "DONE" ||
+    item.progress === "PAID"
+  );
+};
 
 const currentCategory = computed(() =>
   categories.find((cat) => cat.key === selectedCategory.value)
@@ -325,24 +340,15 @@ const selectedTotal = computed(() =>
 );
 
 const completedCount = computed(() =>
-  items.value.filter(
-    (item) => item.progress === "DONE" || item.progress === "PAID"
-  ).length
+  items.value.filter((item) => isCompleted(item)).length
 );
 
 const urgentCount = computed(() =>
   items.value.filter((item) => item.priority === "URGENT").length
 );
 
-const completionPercent = computed(() => {
-  if (items.value.length === 0) return 0;
-  return Math.round((completedCount.value / items.value.length) * 100);
-});
-
 const selectedCompletedCount = computed(() =>
-  filteredItems.value.filter(
-    (item) => item.progress === "DONE" || item.progress === "PAID"
-  ).length
+  filteredItems.value.filter((item) => isCompleted(item)).length
 );
 
 const selectedCompletionPercent = computed(() => {
@@ -363,7 +369,8 @@ const resetForm = () => {
     progress: "NOT YET",
     priority: "LOW",
     wishlistLink: "",
-    files: []
+    files: [],
+    completed: false
   };
 
   editId.value = null;
@@ -371,6 +378,9 @@ const resetForm = () => {
 
 const submitItem = async () => {
   if (!form.value.name.trim()) return;
+
+  const completed =
+    form.value.progress === "DONE" || form.value.progress === "PAID";
 
   if (editId.value) {
     await updateNikahItem(editId.value, {
@@ -381,7 +391,8 @@ const submitItem = async () => {
       details: form.value.details || "",
       progress: form.value.progress,
       priority: form.value.priority || "LOW",
-      wishlistLink: form.value.wishlistLink || ""
+      wishlistLink: form.value.wishlistLink || "",
+      completed
     });
 
     resetForm();
@@ -391,10 +402,22 @@ const submitItem = async () => {
   await addNikahItem({
     ...form.value,
     price: Number(form.value.price || 0),
+    completed,
     files: []
   });
 
   resetForm();
+};
+
+const toggleCompleted = async (item: NikahItem) => {
+  if (!item.id) return;
+
+  const newCompleted = !isCompleted(item);
+
+  await updateNikahItem(item.id, {
+    completed: newCompleted,
+    progress: newCompleted ? "DONE" : "NOT YET"
+  });
 };
 
 const startEdit = (item: NikahItem) => {
@@ -409,7 +432,8 @@ const startEdit = (item: NikahItem) => {
     progress: item.progress,
     priority: item.priority || "LOW",
     wishlistLink: item.wishlistLink || "",
-    files: item.files || []
+    files: item.files || [],
+    completed: isCompleted(item)
   };
 
   window.scrollTo({
@@ -422,10 +446,7 @@ const cancelEdit = () => {
   resetForm();
 };
 
-const uploadFilesForItem = async (
-  event: Event,
-  item: NikahItem
-) => {
+const uploadFilesForItem = async (event: Event, item: NikahItem) => {
   const target = event.target as HTMLInputElement;
   const files = Array.from(target.files || []);
 
@@ -452,10 +473,7 @@ const uploadFilesForItem = async (
   target.value = "";
 };
 
-const removeFileFromItem = async (
-  item: NikahItem,
-  index: number
-) => {
+const removeFileFromItem = async (item: NikahItem, index: number) => {
   if (!item.id) return;
 
   const updatedFiles = [...(item.files || [])];
@@ -470,11 +488,11 @@ const removeItem = async (id: string) => {
   await deleteNikahItem(id);
 };
 
-const updateProgress = async (
-  id: string,
-  progress: string
-) => {
-  await updateNikahItem(id, { progress });
+const updateProgress = async (id: string, progress: string) => {
+  await updateNikahItem(id, {
+    progress,
+    completed: progress === "DONE" || progress === "PAID"
+  });
 };
 
 const isImage = (type: string) => {
@@ -898,5 +916,31 @@ const priorityClass = (priority: string) => {
   .form-actions {
     grid-template-columns: 1fr;
   }
+  .item-card.completed {
+  background: #f3fff6;
+  border-color: rgba(19, 148, 71, 0.25);
+}
+
+.item-card.completed h3 {
+  text-decoration: line-through;
+  color: #139447;
+}
+
+.complete-row {
+  margin: 12px 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #777;
+  cursor: pointer;
+  user-select: none;
+}
+
+.complete-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: #ff7eb3;
+}
 }
 </style>

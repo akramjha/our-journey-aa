@@ -17,7 +17,8 @@ const COLLECTION_NAME = "weddingEventPlanner";
 export const addWeddingItem = async (data: WeddingEventItem) => {
   await addDoc(collection(db, COLLECTION_NAME), {
     ...data,
-    createdAt: Date.now()
+    completed: false,
+    createdAt: Date.now(),
   });
 };
 

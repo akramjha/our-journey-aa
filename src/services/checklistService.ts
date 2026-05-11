@@ -20,13 +20,11 @@ export const addChecklistItem = async (
   data: ChecklistItem
 ) => {
 
-  await addDoc(
-    collection(db, COLLECTION_NAME),
-    {
-      ...data,
-      createdAt: Date.now()
-    }
-  );
+  await addDoc(collection(db, COLLECTION_NAME), {
+    ...data,
+    completed: false,
+    createdAt: Date.now(),
+  });
 
 };
 

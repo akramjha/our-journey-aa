@@ -10,15 +10,24 @@ export interface NikahItem {
   category: string;
 
   name: string;
+
   price: number;
+
   vendor?: string;
+
   details?: string;
+
   progress: string;
 
   priority?: string;
+
   wishlistLink?: string;
 
   files?: NikahFile[];
 
   createdAt?: number;
+
+  completed?: boolean;
+
+  dueDate?: string;
 }

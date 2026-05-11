@@ -16,4 +16,6 @@ export interface TunangItem {
   progress: string;
 
   createdAt?: number;
+  completed?: boolean;
+  dueDate?: string;
 }

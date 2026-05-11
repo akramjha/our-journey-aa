@@ -21,4 +21,6 @@ export interface WeddingEventItem {
   files?: WeddingFile[];
 
   createdAt?: number;
+  completed?: boolean;
+  dueDate?: string;
 }

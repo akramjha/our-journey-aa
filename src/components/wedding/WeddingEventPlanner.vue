@@ -45,11 +45,7 @@
         <div class="field">
           <label>Category</label>
           <select v-model="form.category">
-            <option
-              v-for="cat in categories"
-              :key="cat.key"
-              :value="cat.key"
-            >
+            <option v-for="cat in categories" :key="cat.key" :value="cat.key">
               {{ cat.label }}
             </option>
           </select>
@@ -57,36 +53,22 @@
 
         <div class="field">
           <label>Item Name</label>
-          <input
-            v-model="form.name"
-            placeholder="Example: Venue, photobooth, doorgift"
-          />
+          <input v-model="form.name" placeholder="Example: Venue, photobooth, doorgift" />
         </div>
 
         <div class="field">
           <label>Quantity</label>
-          <input
-            type="number"
-            v-model.number="form.quantity"
-            placeholder="Optional"
-          />
+          <input type="number" v-model.number="form.quantity" placeholder="Optional" />
         </div>
 
         <div class="field">
           <label>Price (RM)</label>
-          <input
-            type="number"
-            v-model.number="form.price"
-            placeholder="Example: 500"
-          />
+          <input type="number" v-model.number="form.price" placeholder="Example: 500" />
         </div>
 
         <div class="field">
           <label>Vendor</label>
-          <input
-            v-model="form.vendor"
-            placeholder="Vendor name"
-          />
+          <input v-model="form.vendor" placeholder="Vendor name" />
         </div>
 
         <div class="field">
@@ -98,6 +80,11 @@
             <option value="PAID">PAID</option>
             <option value="DONE">DONE</option>
           </select>
+        </div>
+
+        <div class="field">
+          <label>Due Date</label>
+          <input type="date" v-model="form.dueDate" />
         </div>
 
         <div class="field">
@@ -113,18 +100,12 @@
 
       <div class="field">
         <label>Wishlist / Inspiration Link</label>
-        <input
-          v-model="form.wishlistLink"
-          placeholder="Shopee / TikTok / Instagram / Pinterest link"
-        />
+        <input v-model="form.wishlistLink" placeholder="Shopee / TikTok / Instagram / Pinterest link" />
       </div>
 
       <div class="field">
         <label>Details</label>
-        <textarea
-          v-model="form.details"
-          placeholder="Example: 500 pax, design theme, vendor notes"
-        ></textarea>
+        <textarea v-model="form.details" placeholder="Example: 500 pax, design theme, vendor notes"></textarea>
       </div>
 
       <div class="form-actions">
@@ -132,11 +113,7 @@
           {{ editId ? "Save Changes" : "+ Save Item" }}
         </button>
 
-        <button
-          v-if="editId"
-          class="cancel-btn"
-          @click="cancelEdit"
-        >
+        <button v-if="editId" class="cancel-btn" @click="cancelEdit">
           Cancel
         </button>
       </div>
@@ -163,7 +140,7 @@
         <div
           v-for="item in filteredItems"
           :key="item.id"
-          class="item-card"
+          :class="['item-card', { completed: isCompleted(item) }]"
         >
           <div class="item-top">
             <div>
@@ -191,6 +168,18 @@
             </div>
           </div>
 
+          <label class="complete-row">
+            <input
+              type="checkbox"
+              :checked="isCompleted(item)"
+              @change="toggleCompleted(item)"
+            />
+
+            <span>
+              {{ isCompleted(item) ? "Completed" : "Mark as completed" }}
+            </span>
+          </label>
+
           <div class="info-grid">
             <div>
               <span>Price</span>
@@ -217,21 +206,14 @@
               @change="uploadFilesForItem($event, item)"
             />
 
-            <div
-              v-if="item.files && item.files.length > 0"
-              class="file-list"
-            >
+            <div v-if="item.files && item.files.length > 0" class="file-list">
               <div
                 v-for="(file, index) in item.files"
                 :key="file.url"
                 class="file-row"
               >
                 <div>
-                  <a
-                    :href="file.url"
-                    target="_blank"
-                    class="file-link"
-                  >
+                  <a :href="file.url" target="_blank" class="file-link">
                     {{ isImage(file.type) ? "🖼️" : "📎" }}
                     {{ file.name }}
                   </a>
@@ -243,20 +225,14 @@
                   />
                 </div>
 
-                <button
-                  class="remove-file-btn"
-                  @click="removeFileFromItem(item, index)"
-                >
+                <button class="remove-file-btn" @click="removeFileFromItem(item, index)">
                   Remove
                 </button>
               </div>
             </div>
           </div>
 
-          <div
-            v-if="imageFiles(item).length > 0"
-            class="gallery"
-          >
+          <div v-if="imageFiles(item).length > 0" class="gallery">
             <h4>🖼 Inspiration Gallery</h4>
 
             <div class="gallery-grid">
@@ -338,7 +314,9 @@ const form = ref<WeddingEventItem>({
   progress: "NOT YET",
   priority: "LOW",
   wishlistLink: "",
-  files: []
+  files: [],
+  completed: false,
+  dueDate: ""
 });
 
 onMounted(() => {
@@ -346,6 +324,14 @@ onMounted(() => {
     items.value = data;
   });
 });
+
+const isCompleted = (item: WeddingEventItem) => {
+  return (
+    item.completed === true ||
+    item.progress === "DONE" ||
+    item.progress === "PAID"
+  );
+};
 
 const currentCategory = computed(() =>
   categories.find((cat) => cat.key === selectedCategory.value)
@@ -364,9 +350,7 @@ const selectedTotal = computed(() =>
 );
 
 const completedCount = computed(() =>
-  items.value.filter(
-    (item) => item.progress === "DONE" || item.progress === "PAID"
-  ).length
+  items.value.filter((item) => isCompleted(item)).length
 );
 
 const urgentCount = computed(() =>
@@ -374,9 +358,7 @@ const urgentCount = computed(() =>
 );
 
 const selectedCompletedCount = computed(() =>
-  filteredItems.value.filter(
-    (item) => item.progress === "DONE" || item.progress === "PAID"
-  ).length
+  filteredItems.value.filter((item) => isCompleted(item)).length
 );
 
 const selectedCompletionPercent = computed(() => {
@@ -398,7 +380,8 @@ const resetForm = () => {
     progress: "NOT YET",
     priority: "LOW",
     wishlistLink: "",
-    files: []
+    files: [],
+    completed: false
   };
 
   editId.value = null;
@@ -406,6 +389,9 @@ const resetForm = () => {
 
 const submitItem = async () => {
   if (!form.value.name.trim()) return;
+
+  const completed =
+    form.value.progress === "DONE" || form.value.progress === "PAID";
 
   if (editId.value) {
     await updateWeddingItem(editId.value, {
@@ -417,7 +403,8 @@ const submitItem = async () => {
       details: form.value.details || "",
       progress: form.value.progress,
       priority: form.value.priority || "LOW",
-      wishlistLink: form.value.wishlistLink || ""
+      wishlistLink: form.value.wishlistLink || "",
+      completed
     });
 
     resetForm();
@@ -428,10 +415,22 @@ const submitItem = async () => {
     ...form.value,
     quantity: form.value.quantity || undefined,
     price: Number(form.value.price || 0),
+    completed,
     files: []
   });
 
   resetForm();
+};
+
+const toggleCompleted = async (item: WeddingEventItem) => {
+  if (!item.id) return;
+
+  const newCompleted = !isCompleted(item);
+
+  await updateWeddingItem(item.id, {
+    completed: newCompleted,
+    progress: newCompleted ? "DONE" : "NOT YET"
+  });
 };
 
 const startEdit = (item: WeddingEventItem) => {
@@ -447,7 +446,8 @@ const startEdit = (item: WeddingEventItem) => {
     progress: item.progress,
     priority: item.priority || "LOW",
     wishlistLink: item.wishlistLink || "",
-    files: item.files || []
+    files: item.files || [],
+    completed: isCompleted(item)
   };
 
   window.scrollTo({
@@ -513,7 +513,10 @@ const updateProgress = async (
   id: string,
   progress: string
 ) => {
-  await updateWeddingItem(id, { progress });
+  await updateWeddingItem(id, {
+    progress,
+    completed: progress === "DONE" || progress === "PAID"
+  });
 };
 
 const isImage = (type: string) => {
@@ -703,6 +706,33 @@ const priorityClass = (priority: string) => {
   padding: 20px;
   border-radius: 22px;
   border: 1px solid rgba(255, 182, 193, 0.35);
+}
+
+.item-card.completed {
+  background: #f3fff6;
+  border-color: rgba(19, 148, 71, 0.25);
+}
+
+.item-card.completed h3 {
+  text-decoration: line-through;
+  color: #139447;
+}
+
+.complete-row {
+  margin: 12px 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #777;
+  cursor: pointer;
+  user-select: none;
+}
+
+.complete-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: #ff7eb3;
 }
 
 .item-top {
