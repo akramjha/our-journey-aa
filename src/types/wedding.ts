@@ -6,10 +6,8 @@ export interface WeddingFile {
 
 export interface WeddingEventItem {
   id?: string;
-
   category: string;
   name: string;
-
   quantity?: number;
   price: number;
   vendor?: string;
@@ -17,9 +15,7 @@ export interface WeddingEventItem {
   progress: string;
   priority?: string;
   wishlistLink?: string;
-
   files?: WeddingFile[];
-
   createdAt?: number;
   completed?: boolean;
   dueDate?: string;

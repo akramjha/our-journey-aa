@@ -33,8 +33,8 @@
       </button>
     </div>
 
-    <div class="form-card">
-      <h2>➕ Add Item</h2>
+        <div class="form-card">
+      <h2>{{ editId ? "✏️ Edit Tunang Item" : "➕ Add Tunang Item" }}</h2>
 
       <div class="form-grid">
         <div class="field">
@@ -47,13 +47,8 @@
         </div>
 
         <div class="field">
-          <label>Item / Name</label>
-          <input v-model="form.name" placeholder="Example: Dewan, Baju, Photographer" />
-        </div>
-
-        <div class="field">
-          <label>Price (RM)</label>
-          <input type="number" v-model.number="form.price" placeholder="Example: 500" />
+          <label>Item Name</label>
+          <input v-model="form.name" placeholder="Example: Venue, photobooth, doorgift" />
         </div>
 
         <div class="field">
@@ -62,15 +57,20 @@
         </div>
 
         <div class="field">
+          <label>Price (RM)</label>
+          <input type="number" v-model.number="form.price" placeholder="Example: 500" />
+        </div>
+
+        <div class="field">
           <label>Vendor</label>
-          <input v-model="form.vendor" placeholder="Optional" />
+          <input v-model="form.vendor" placeholder="Vendor name" />
         </div>
 
         <div class="field">
           <label>Progress</label>
           <select v-model="form.progress">
             <option value="NOT YET">NOT YET</option>
-            <option value="PLANNING">PLANNING</option>
+            <option value="SURVEY">SURVEY</option>
             <option value="BOOKED">BOOKED</option>
             <option value="PAID">PAID</option>
             <option value="DONE">DONE</option>
@@ -81,22 +81,43 @@
           <label>Due Date</label>
           <input type="date" v-model="form.dueDate" />
         </div>
+
+        <div class="field">
+          <label>Priority</label>
+          <select v-model="form.priority">
+            <option value="LOW">LOW</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="HIGH">HIGH</option>
+            <option value="URGENT">URGENT</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Wishlist / Inspiration Link</label>
+        <input v-model="form.wishlistLink" placeholder="Shopee / TikTok / Instagram / Pinterest link" />
       </div>
 
       <div class="field">
         <label>Details</label>
-        <textarea v-model="form.details" placeholder="Any notes or details"></textarea>
+        <textarea v-model="form.details" placeholder="Example: 500 pax, design theme, vendor notes"></textarea>
       </div>
 
-      <button class="save-btn" @click="addItem">
-        + Save Item
-      </button>
+      <div class="form-actions">
+        <button class="save-btn" @click="submitItem">
+          {{ editId ? "Save Changes" : "+ Save Item" }}
+        </button>
+
+        <button v-if="editId" class="cancel-btn" @click="cancelEdit">
+          Cancel
+        </button>
+      </div>
     </div>
 
     <div class="category-section">
       <div class="section-header">
         <h2>{{ currentCategory?.icon }} {{ currentCategory?.label }}</h2>
-        <p>Total: RM {{ selectedTotal.toFixed(2) }}</p>
+        <p>{{ filteredItems.length }} item(s)</p>
       </div>
 
       <div v-if="filteredItems.length === 0" class="empty">
@@ -114,9 +135,14 @@
               <h3>{{ item.name }}</h3>
               <p>{{ item.details || "No details" }}</p>
 
-              <p v-if="item.dueDate" class="due-date">
-                📅 Due: {{ formatDate(item.dueDate) }}
-              </p>
+              <a
+                v-if="item.wishlistLink"
+                :href="item.wishlistLink"
+                target="_blank"
+                class="wish-link"
+              >
+                🔗 Open Wishlist / Inspiration
+              </a>
             </div>
 
             <span class="badge" :class="badgeClass(item.progress)">
@@ -152,6 +178,55 @@
               <strong>{{ item.vendor || "-" }}</strong>
             </div>
           </div>
+          <div class="file-section">
+            <label>Upload inspiration / receipt / picture</label>
+
+            <input
+              type="file"
+              multiple
+              @change="uploadFilesForItem($event, item)"
+            />
+
+            <div v-if="item.files && item.files.length > 0" class="file-list">
+              <div
+                v-for="(file, index) in item.files"
+                :key="file.url"
+                class="file-row"
+              >
+                <div>
+                  <a :href="file.url" target="_blank" class="file-link">
+                    {{ isImage(file.type) ? "🖼️" : "📎" }}
+                    {{ file.name }}
+                  </a>
+
+                  <img
+                    v-if="isImage(file.type)"
+                    :src="file.url"
+                    class="preview"
+                  />
+                </div>
+
+                <button class="remove-file-btn" @click="removeFileFromItem(item, index)">
+                  Remove
+                </button>
+              </div>
+            </div>
+            <div v-if="imageFiles(item).length > 0" class="gallery">
+            <h4>🖼 Inspiration Gallery</h4>
+
+            <div class="gallery-grid">
+              <a
+                v-for="file in imageFiles(item)"
+                :key="file.url"
+                :href="file.url"
+                target="_blank"
+              >
+                <img :src="file.url" />
+              </a>
+            </div>
+          </div>
+
+          </div>
 
           <div class="actions">
             <select
@@ -164,6 +239,10 @@
               <option value="PAID">PAID</option>
               <option value="DONE">DONE</option>
             </select>
+
+            <button class="edit-btn" @click="startEdit(item)">
+              Edit
+            </button>
 
             <button class="delete-btn" @click="removeItem(item.id!)">
               Delete
@@ -186,7 +265,12 @@ import {
   updateTunangItem
 } from "@/services/tunangService";
 
-import type { TunangItem } from "@/types/tunang";
+import { uploadToCloudinary } from "@/services/uploadService";
+
+import type {
+  TunangItem,
+  TunangFile
+} from "@/types/tunang";
 
 const categories = [
   { key: "venue", label: "Venue Suggestion", icon: "🏛️" },
@@ -201,6 +285,19 @@ const categories = [
 const selectedCategory = ref("venue");
 
 const items = ref<TunangItem[]>([]);
+const editId = ref<string | null>(null);
+
+const selectedCompletedCount = computed(() =>
+  filteredItems.value.filter((item) => isCompleted(item)).length
+);
+
+const selectedCompletionPercent = computed(() => {
+  if (filteredItems.value.length === 0) return 0;
+
+  return Math.round(
+    (selectedCompletedCount.value / filteredItems.value.length) * 100
+  );
+});
 
 const form = ref<TunangItem>({
   category: "venue",
@@ -210,6 +307,8 @@ const form = ref<TunangItem>({
   vendor: "",
   details: "",
   progress: "NOT YET",
+  priority: "LOW",
+  wishlistLink: "",
   completed: false,
   dueDate: ""
 });
@@ -248,30 +347,61 @@ const completedCount = computed(() =>
   items.value.filter((item) => isCompleted(item)).length
 );
 
-const addItem = async () => {
+const resetForm = () => {
+  form.value = {
+    category: selectedCategory.value,
+    name: "",
+    quantity: undefined,
+    price: 0,
+    vendor: "",
+    details: "",
+    progress: "NOT YET",
+    priority: "LOW",
+    wishlistLink: "",
+    files: [],
+    completed: false
+  };
+
+  editId.value = null;
+};
+
+const cancelEdit = () => {
+  resetForm();
+};
+
+const submitItem = async () => {
   if (!form.value.name.trim()) return;
 
   const completed =
     form.value.progress === "DONE" || form.value.progress === "PAID";
 
+  if (editId.value) {
+    await updateTunangItem(editId.value, {
+      category: form.value.category,
+      name: form.value.name,
+      quantity: form.value.quantity || undefined,
+      price: Number(form.value.price || 0),
+      vendor: form.value.vendor || "",
+      details: form.value.details || "",
+      progress: form.value.progress,
+      priority: form.value.priority || "LOW",
+      wishlistLink: form.value.wishlistLink || "",
+      completed
+    });
+
+    resetForm();
+    return;
+  }
+
   await addTunangItem({
     ...form.value,
-    price: Number(form.value.price || 0),
     quantity: form.value.quantity || undefined,
-    completed
+    price: Number(form.value.price || 0),
+    completed,
+    files: []
   });
 
-  form.value = {
-    category: selectedCategory.value,
-    name: "",
-    price: 0,
-    quantity: undefined,
-    vendor: "",
-    details: "",
-    progress: "NOT YET",
-    completed: false,
-    dueDate: ""
-  };
+  resetForm();
 };
 
 const toggleCompleted = async (item: TunangItem) => {
@@ -302,6 +432,89 @@ const badgeClass = (progress: string) => {
   if (progress === "BOOKED") return "booked";
   if (progress === "PLANNING") return "planning";
   return "not-yet";
+};
+
+const startEdit = (item: TunangItem) => {
+  editId.value = item.id || null;
+
+  form.value = {
+    category: item.category,
+    name: item.name,
+    quantity: item.quantity || undefined,
+    price: Number(item.price || 0),
+    vendor: item.vendor || "",
+    details: item.details || "",
+    progress: item.progress,
+    priority: item.priority || "LOW",
+    wishlistLink: item.wishlistLink || "",
+    files: item.files || [],
+    completed: isCompleted(item)
+  };
+}
+
+const isImage = (type: string) => {
+  return type.startsWith("image/");
+};
+
+const imageFiles = (item: TunangItem) => {
+  return (item.files || []).filter((file) => isImage(file.type));
+};
+
+const removeFileFromItem = async (
+  item: TunangItem,
+  index: number
+) => {
+  if (!item.id) return;
+
+  const updatedFiles = [...(item.files || [])];
+
+  updatedFiles.splice(index, 1);
+
+  await updateTunangItem(item.id, {
+    files: updatedFiles
+  });
+};
+
+
+const uploadFilesForItem = async (
+  event: Event,
+  item: TunangItem
+) => {
+  const target = event.target as HTMLInputElement;
+  const files = Array.from(target.files || []);
+
+  if (!item.id || files.length === 0) return;
+
+  const uploadedFiles: TunangFile[] = [];
+
+  for (const file of files) {
+    const uploaded = await uploadToCloudinary(file);
+
+    uploadedFiles.push({
+      url: uploaded.url,
+      name: uploaded.name,
+      type: uploaded.type
+    });
+  }
+
+  const existingFiles = item.files || [];
+
+  await updateTunangItem(item.id, {
+    files: [...existingFiles, ...uploadedFiles]
+  });
+
+  target.value = "";
+};
+
+const urgentCount = computed(() =>
+  items.value.filter((item) => item.priority === "URGENT").length
+);
+
+const priorityClass = (priority: string) => {
+  if (priority === "URGENT") return "urgent";
+  if (priority === "HIGH") return "high";
+  if (priority === "MEDIUM") return "medium";
+  return "low";
 };
 
 const formatDate = (date: string) => {
@@ -348,6 +561,30 @@ const formatDate = (date: string) => {
 .summary-card span {
   color: #777;
   font-size: 13px;
+}
+
+.gallery {
+  background: white;
+  padding: 14px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+
+.gallery h4 {
+  margin-top: 0;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 10px;
+}
+
+.gallery-grid img {
+  width: 100%;
+  height: 95px;
+  object-fit: cover;
+  border-radius: 12px;
 }
 
 .summary-card h2 {
@@ -419,6 +656,15 @@ const formatDate = (date: string) => {
   min-height: 90px;
   resize: vertical;
 }
+.save-btn,
+.cancel-btn,
+.edit-btn,
+.delete-btn,
+.remove-file-btn {
+  border: none;
+  cursor: pointer;
+  font-weight: 800;
+}
 
 .save-btn {
   width: 100%;
@@ -436,6 +682,12 @@ const formatDate = (date: string) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 18px;
+}
+.edit-btn {
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: #e6f0ff;
+  color: #2f6cd6;
 }
 
 .section-header p {
@@ -553,6 +805,70 @@ const formatDate = (date: string) => {
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-bottom: 18px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.info-grid div {
+  background: white;
+  padding: 14px;
+  border-radius: 14px;
+}
+
+.info-grid span {
+  display: block;
+  color: #777;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+.file-section {
+  margin: 16px 0;
+  background: white;
+  padding: 14px;
+  border-radius: 16px;
+}
+
+.file-list {
+  margin-top: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.file-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  background: #fff7fb;
+  padding: 12px;
+  border-radius: 14px;
+}
+
+.file-link {
+  color: #d63384;
+  font-weight: 700;
+  text-decoration: none;
+  word-break: break-word;
+}
+
+.preview {
+  display: block;
+  margin-top: 10px;
+  max-width: 120px;
+  border-radius: 12px;
+}
+
+.remove-file-btn {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #ffe3e3;
+  color: #d33;
 }
 
 .item-info div {
