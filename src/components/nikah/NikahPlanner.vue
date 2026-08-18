@@ -63,7 +63,7 @@
 
         <div class="field">
           <label>Vendor</label>
-          <input v-model="form.vendor" placeholder="Example: Shopee, vendor name" />
+          <input v-model="form.vendor" placeholder="Example: Shopee,vendor name" />
         </div>
 
         <div class="field">
