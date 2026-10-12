@@ -1,62 +1,71 @@
 <template>
-  <div class="page">
-    <div class="card">
-        <button class="back-btn" @click="$router.push('/')">
-        ← Back to Dashboard
-        </button>
-      <h1>💖 Couple Settings</h1>
+  <div class="ap-page">
+    <div class="shell">
+      <AppHeader />
 
-      <p class="subtitle">
-        Personalize your wedding dashboard ✨
-      </p>
-
-      <div class="form-grid">
-        <div class="field">
-          <label>Partner 1 Name</label>
-
-          <input v-model="form.partner1" />
-        </div>
-
-        <div class="field">
-          <label>Partner 2 Name</label>
-
-          <input v-model="form.partner2" />
-        </div>
-
-        <div class="field">
-          <label>Relationship Start Date</label>
-
-          <input type="date" v-model="form.startDate" />
-        </div>
-
-        <div class="field">
-          <label>Engagement Date</label>
-
-          <input type="date" v-model="form.engagementDate" />
-        </div>
-
-        <div class="field">
-          <label>Wedding Date</label>
-
-          <input type="date" v-model="form.weddingDate" />
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Custom Love Note</label>
-
-        <textarea v-model="form.loveNote"></textarea>
-      </div>
-
-      <button class="save-btn" @click="saveSettings">
-        Save Settings 💕
+      <button type="button" class="back" @click="$router.push('/')">
+        <AppIcon name="chevron-left" />
+        <span>Dashboard</span>
       </button>
+
+      <header class="title-block">
+        <h1>Couple Settings</h1>
+        <p>Personalize your wedding dashboard.</p>
+      </header>
+
+      <form class="form" @submit.prevent="saveSettings">
+        <section aria-labelledby="names-title">
+          <h2 id="names-title" class="section-head">Names</h2>
+          <div class="group">
+            <div class="field">
+              <label for="partner1">Partner 1 name</label>
+              <input id="partner1" v-model="form.partner1" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label for="partner2">Partner 2 name</label>
+              <input id="partner2" v-model="form.partner2" autocomplete="off" />
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="dates-title">
+          <h2 id="dates-title" class="section-head">Dates</h2>
+          <div class="group">
+            <div class="field">
+              <label for="startDate">Relationship start date</label>
+              <input id="startDate" type="date" v-model="form.startDate" />
+            </div>
+            <div class="field">
+              <label for="engagementDate">Engagement date</label>
+              <input id="engagementDate" type="date" v-model="form.engagementDate" />
+            </div>
+            <div class="field">
+              <label for="weddingDate">Wedding date</label>
+              <input id="weddingDate" type="date" v-model="form.weddingDate" />
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="note-title">
+          <h2 id="note-title" class="section-head">Love note</h2>
+          <div class="group">
+            <div class="field">
+              <label for="loveNote">Shown on your dashboard</label>
+              <textarea id="loveNote" v-model="form.loveNote"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <button type="submit" class="save-btn">Save settings</button>
+      </form>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
+import AppHeader from "@/components/AppHeader.vue";
+import AppIcon from "@/components/ui/AppIcon.vue";
 import { useRouter } from "vue-router";
 
 import {
@@ -98,133 +107,147 @@ const saveSettings = async () => {
 </script>
 
 <style scoped>
-.page {
-  min-height: 100vh;
-
-  padding: 40px;
-
-  background: linear-gradient(
-    135deg,
-    #fff7fb,
-    #eef6ff
-  );
+.shell {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 20px 112px;
 }
 
-.card {
-  max-width: 900px;
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  margin: 0 0 4px -6px;
+  padding: 0 10px 0 4px;
+  border: 0;
+  background: none;
+  color: var(--ap-accent);
+  font: inherit;
+  font-size: 17px;
+  cursor: pointer;
+}
 
-  margin: auto;
+.back :deep(.icon) {
+  font-size: 24px;
+}
 
-  background: white;
-
-  padding: 32px;
-
-  border-radius: 28px;
-
-  box-shadow: 0 10px 28px rgba(0,0,0,0.05);
+.title-block {
+  margin: 0 4px 28px;
 }
 
 h1 {
-  margin-top: 0;
-
-  color: #d63384;
+  margin: 0;
+  font-size: clamp(34px, 6vw, 48px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
 }
 
-.subtitle {
-  color: #777;
-
-  margin-bottom: 28px;
+.title-block p {
+  margin: 6px 0 0;
+  color: var(--ap-label-2);
+  font-size: 17px;
 }
 
-.form-grid {
+.form {
   display: grid;
+  gap: 28px;
+}
 
-  grid-template-columns: repeat(2, 1fr);
+.section-head {
+  margin: 0;
+  padding: 0 4px 10px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
 
-  gap: 18px;
+.group {
+  background: var(--ap-glass);
+  -webkit-backdrop-filter: var(--ap-glass-filter);
+  backdrop-filter: var(--ap-glass-filter);
+  border-radius: var(--ap-radius);
+  box-shadow: var(--ap-glass-edge), var(--ap-shadow);
+  overflow: hidden;
 }
 
 .field {
-  margin-bottom: 18px;
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+}
+
+.field + .field {
+  box-shadow: inset 0 0.5px 0 var(--ap-separator);
 }
 
 .field label {
-  display: block;
-
-  margin-bottom: 8px;
-
+  color: var(--ap-label-2);
   font-size: 13px;
-
-  color: #555;
-
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .field input,
 .field textarea {
   width: 100%;
-
-  padding: 14px;
-
-  border-radius: 14px;
-
-  border: 1px solid #eee;
-
+  min-height: 44px;
+  padding: 10px 14px;
   box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--ap-surface-2);
+  color: var(--ap-label);
+  font-family: inherit;
+  font-size: 16px;
+  transition: border-color 0.2s var(--ap-ease), box-shadow 0.2s var(--ap-ease);
+}
 
-  font-size: 14px;
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--ap-accent);
+  box-shadow: 0 0 0 3px var(--ap-accent-soft);
 }
 
 .field textarea {
   min-height: 120px;
-
+  line-height: 1.5;
   resize: vertical;
 }
 
 .save-btn {
   width: 100%;
-
-  border: none;
-
-  padding: 16px;
-
-  border-radius: 16px;
-
-  background: linear-gradient(
-    135deg,
-    #ff9a9e,
-    #a0c4ff
-  );
-
-  color: white;
-
-  font-weight: 800;
-
+  min-height: 50px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ap-accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 600;
   cursor: pointer;
+  transition: transform 0.2s var(--ap-ease), opacity 0.2s var(--ap-ease);
 }
 
-.back-btn {
-  border: none;
-  padding: 10px 16px;
-  border-radius: 999px;
-  background: #fff0f5;
-  color: #d63384;
-  font-weight: 800;
-  cursor: pointer;
-  margin-bottom: 18px;
+.save-btn:hover {
+  opacity: 0.92;
 }
 
-@media (max-width: 768px) {
-  .page {
-    padding: 18px;
-  }
+.save-btn:active {
+  transform: scale(0.98);
+}
 
-  .card {
-    padding: 20px;
+@media (prefers-color-scheme: dark) {
+  .save-btn {
+    color: #1c1c1e;
   }
+}
 
-  .form-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 420px) {
+  .shell {
+    padding: 12px 16px 104px;
   }
 }
 </style>

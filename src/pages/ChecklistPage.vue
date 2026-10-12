@@ -1,7 +1,9 @@
 <template>
-  <div class="page">
-    <AppHeader />
-    <ChecklistModule />
+  <div class="ap-page">
+    <div class="shell">
+      <AppHeader />
+      <ChecklistModule />
+    </div>
   </div>
 </template>
 
@@ -11,16 +13,21 @@ import ChecklistModule from "@/components/checklist/ChecklistModule.vue";
 </script>
 
 <style scoped>
-.page {
-  min-height: 100vh;
-  padding: 40px;
-  background: linear-gradient(135deg, #fff7fb, #eef6ff);
-  font-family: system-ui;
+.shell {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 16px 20px 112px;
 }
 
-@media (max-width: 768px) {
-  .page {
-    padding: 18px;
+@media (min-width: 900px) {
+  .shell {
+    padding: 24px 32px 120px;
+  }
+}
+
+@media (max-width: 420px) {
+  .shell {
+    padding: 12px 16px 104px;
   }
 }
 </style>

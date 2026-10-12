@@ -1,7 +1,9 @@
 <template>
-  <div class="page">
+  <div class="ap-page">
     <AppHeader />
-    <GoldSavings />
+    <main class="shell">
+      <GoldSavings />
+    </main>
   </div>
 </template>
 
@@ -11,16 +13,10 @@ import GoldSavings from "@/components/savings/GoldSavings.vue";
 </script>
 
 <style scoped>
-.page {
-  min-height: 100vh;
-  padding: 40px;
-  background: linear-gradient(135deg, #fff7fb, #eef6ff);
-  font-family: system-ui;
-}
-
-@media (max-width: 768px) {
-  .page {
-    padding: 18px;
-  }
+.shell {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 16px 20px 112px;
+  box-sizing: border-box;
 }
 </style>

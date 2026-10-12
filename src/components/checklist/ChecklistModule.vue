@@ -1,135 +1,149 @@
 <template>
-  <div>
-    <header class="main-header">
-      <h1>📑 Borang Checklist</h1>
-      <p>Track nikah documents, forms and submissions ✨</p>
+  <div class="checklist">
+    <header class="title-block">
+      <h1>Borang Checklist</h1>
+      <p>Track nikah documents, forms and submissions.</p>
     </header>
 
-    <div class="summary-grid">
-      <div class="summary-card">
-        <span>Total Items</span>
-        <h2>{{ items.length }}</h2>
+    <section class="group summary" aria-label="Summary">
+      <div class="stat">
+        <span class="stat-label">Total</span>
+        <span class="stat-value">{{ items.length }}</span>
       </div>
-
-      <div class="summary-card">
-        <span>Completed</span>
-        <h2>{{ completedCount }}</h2>
+      <div class="stat">
+        <span class="stat-label">Completed</span>
+        <span class="stat-value">{{ completedCount }}</span>
       </div>
-
-      <div class="summary-card">
-        <span>Progress</span>
-        <h2>{{ completionPercent }}%</h2>
+      <div class="stat">
+        <span class="stat-label">Progress</span>
+        <span class="stat-value accent">{{ completionPercent }}<small>%</small></span>
       </div>
-    </div>
+    </section>
 
-    <div class="progress-card">
-      <div class="progress-top">
-        <h2>Checklist Completion</h2>
-        <span>{{ completedCount }} / {{ items.length }}</span>
+    <section class="block" aria-labelledby="completion-title">
+      <div class="section-head">
+        <h2 id="completion-title">Completion</h2>
+        <span class="count">{{ completedCount }} / {{ items.length }}</span>
       </div>
-
-      <div class="progress-bar">
+      <div class="group pad">
         <div
-          class="progress-fill"
-          :style="{ width: `${completionPercent}%` }"
-        ></div>
+          class="bar"
+          role="progressbar"
+          :aria-valuenow="completionPercent"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-label="Checklist completion"
+        >
+          <div class="bar-fill" :style="{ width: `${completionPercent}%` }"></div>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div class="tabs">
+    <div class="tabs" role="tablist" aria-label="Checklist category">
       <button
         v-for="cat in categories"
         :key="cat.key"
+        type="button"
+        role="tab"
+        :aria-selected="selectedCategory === cat.key"
         :class="{ active: selectedCategory === cat.key }"
         @click="selectedCategory = cat.key"
       >
-        {{ cat.icon }} {{ cat.label }}
+        {{ cat.label }}
       </button>
     </div>
 
-    <div class="form-card">
-      <h2>➕ Add Checklist Item</h2>
-
-      <div class="form-grid">
-        <div class="field">
-          <label>Category</label>
-          <select v-model="form.category">
-            <option
-              v-for="cat in categories"
-              :key="cat.key"
-              :value="cat.key"
-            >
-              {{ cat.label }}
-            </option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Item</label>
-          <input v-model="form.item" placeholder="Example: HIV Test" />
-        </div>
-
-        <div class="field">
-          <label>Progress</label>
-          <select v-model="form.progress">
-            <option value="NOT YET">NOT YET</option>
-            <option value="IN PROGRESS">IN PROGRESS</option>
-            <option value="SUBMITTED">SUBMITTED</option>
-            <option value="APPROVED">APPROVED</option>
-            <option value="DONE">DONE</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Due Date</label>
-          <input type="date" v-model="form.dueDate" />
-        </div>
+    <section class="block" aria-labelledby="add-title">
+      <div class="section-head">
+        <h2 id="add-title">Add an item</h2>
       </div>
 
-      <div class="field">
-        <label>Notes</label>
-        <textarea
-          v-model="form.notes"
-          placeholder="Any notes or reminders"
-        ></textarea>
-      </div>
+      <form class="group pad form" @submit.prevent="addItem">
+        <div class="form-grid">
+          <div class="field">
+            <label for="cl-category">Category</label>
+            <select id="cl-category" v-model="form.category">
+              <option v-for="cat in categories" :key="cat.key" :value="cat.key">
+                {{ cat.label }}
+              </option>
+            </select>
+          </div>
 
-      <button class="save-btn" @click="addItem">
-        + Save Item
-      </button>
-    </div>
+          <div class="field">
+            <label for="cl-item">Item</label>
+            <input id="cl-item" v-model="form.item" placeholder="Example: HIV Test" />
+          </div>
 
-    <div class="category-section">
-      <div class="section-header">
-        <div>
-          <h2>{{ currentCategory?.icon }} {{ currentCategory?.label }}</h2>
-          <p>{{ filteredItems.length }} item(s)</p>
+          <div class="field">
+            <label for="cl-progress">Progress</label>
+            <select id="cl-progress" v-model="form.progress">
+              <option value="NOT YET">NOT YET</option>
+              <option value="IN PROGRESS">IN PROGRESS</option>
+              <option value="SUBMITTED">SUBMITTED</option>
+              <option value="APPROVED">APPROVED</option>
+              <option value="DONE">DONE</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="cl-due">Due date</label>
+            <input id="cl-due" type="date" v-model="form.dueDate" />
+          </div>
         </div>
 
-        <span class="section-percent">
-          {{ selectedCompletionPercent }}%
+        <div class="field">
+          <label for="cl-notes">Notes</label>
+          <textarea
+            id="cl-notes"
+            v-model="form.notes"
+            placeholder="Any notes or reminders"
+          ></textarea>
+        </div>
+
+        <button class="primary" type="submit">
+          <AppIcon name="plus" />
+          Save item
+        </button>
+      </form>
+    </section>
+
+    <section class="block" aria-labelledby="category-title">
+      <div class="section-head">
+        <h2 id="category-title">{{ currentCategory?.label }}</h2>
+        <span class="count">
+          {{ filteredItems.length }} {{ filteredItems.length === 1 ? "item" : "items" }}
+          · {{ selectedCompletionPercent }}%
         </span>
       </div>
 
-      <div v-if="filteredItems.length === 0" class="empty">
-        No checklist item yet ✨
-      </div>
+      <p v-if="filteredItems.length === 0" class="empty">
+        Nothing here yet. Add your first item above.
+      </p>
 
-      <div class="item-grid">
-        <div
+      <ul v-else class="group list">
+        <li
           v-for="item in filteredItems"
           :key="item.id"
-          class="item-card"
+          class="item"
           :class="{ completed: isCompleted(item) }"
         >
           <div class="item-top">
-            <div>
-              <h3>{{ item.item }}</h3>
-              <p>{{ item.notes || "No notes yet" }}</p>
+            <label class="check">
+              <input
+                type="checkbox"
+                :checked="isCompleted(item)"
+                :aria-label="isCompleted(item) ? 'Completed' : 'Mark as completed'"
+                @change="toggleCompleted(item)"
+              />
+            </label>
 
-              <p v-if="item.dueDate" class="due-date">
-                📅 Due: {{ formatDate(item.dueDate) }}
-              </p>
+            <div class="item-main">
+              <span class="title">{{ item.item }}</span>
+              <span class="meta">{{ item.notes || "No notes yet" }}</span>
+              <span v-if="item.dueDate" class="meta due">
+                <AppIcon name="calendar" />
+                Due {{ formatDate(item.dueDate) }}
+              </span>
             </div>
 
             <span class="badge" :class="badgeClass(item.progress)">
@@ -137,88 +151,75 @@
             </span>
           </div>
 
-          <label class="complete-row">
-            <input
-              type="checkbox"
-              :checked="isCompleted(item)"
-              @change="toggleCompleted(item)"
-            />
+          <div class="item-body">
+            <div class="file-section">
+              <label class="file-label">
+                <span>Add files or pictures</span>
+                <input
+                  type="file"
+                  multiple
+                  @change="uploadFilesForItem($event, item)"
+                />
+              </label>
 
-            <span>
-              {{ isCompleted(item) ? "Completed" : "Mark as completed" }}
-            </span>
-          </label>
-
-          <div class="file-section">
-            <label>Upload file / picture for this item</label>
-
-            <input
-              type="file"
-              multiple
-              @change="uploadFilesForItem($event, item)"
-            />
-
-            <div
-              v-if="item.files && item.files.length > 0"
-              class="file-list"
-            >
-              <div
-                v-for="(file, index) in item.files"
-                :key="file.url"
-                class="file-row"
-              >
-                <div>
-                  <a
-                    :href="file.url"
-                    target="_blank"
-                    class="file-link"
-                  >
-                    {{ isImage(file.type) ? "🖼️" : "📎" }}
-                    {{ file.name }}
-                  </a>
-
-                  <img
-                    v-if="isImage(file.type)"
-                    :src="file.url"
-                    class="preview"
-                  />
-                </div>
-
-                <button
-                  class="remove-file-btn"
-                  @click="removeFileFromItem(item, index)"
+              <ul v-if="item.files && item.files.length > 0" class="file-list">
+                <li
+                  v-for="(file, index) in item.files"
+                  :key="file.url"
+                  class="file-row"
                 >
-                  Remove
-                </button>
-              </div>
+                  <div class="file-main">
+                    <a :href="file.url" target="_blank" rel="noopener" class="file-link">
+                      <AppIcon name="paperclip" />
+                      <span>{{ file.name }}</span>
+                    </a>
+                    <img
+                      v-if="isImage(file.type)"
+                      :src="file.url"
+                      :alt="file.name"
+                      class="preview"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    class="text-btn danger"
+                    :aria-label="`Remove ${file.name}`"
+                    @click="removeFileFromItem(item, index)"
+                  >
+                    Remove
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            <div class="actions">
+              <select
+                :value="item.progress"
+                aria-label="Progress"
+                @change="updateProgress(item.id!, ($event.target as HTMLSelectElement).value)"
+              >
+                <option value="NOT YET">NOT YET</option>
+                <option value="IN PROGRESS">IN PROGRESS</option>
+                <option value="SUBMITTED">SUBMITTED</option>
+                <option value="APPROVED">APPROVED</option>
+                <option value="DONE">DONE</option>
+              </select>
+
+              <button type="button" class="text-btn danger" @click="removeItem(item.id!)">
+                Delete item
+              </button>
             </div>
           </div>
-
-          <div class="actions">
-            <select
-              :value="item.progress"
-              @change="updateProgress(item.id!, ($event.target as HTMLSelectElement).value)"
-            >
-              <option value="NOT YET">NOT YET</option>
-              <option value="IN PROGRESS">IN PROGRESS</option>
-              <option value="SUBMITTED">SUBMITTED</option>
-              <option value="APPROVED">APPROVED</option>
-              <option value="DONE">DONE</option>
-            </select>
-
-            <button class="delete-btn" @click="removeItem(item.id!)">
-              Delete Item
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
+        </li>
+      </ul>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import AppIcon from "@/components/ui/AppIcon.vue";
 
 import {
   addChecklistItem,
@@ -406,340 +407,495 @@ const formatDate = (date: string) => {
 </script>
 
 <style scoped>
-.main-header {
-  text-align: center;
-  margin-bottom: 34px;
-}
-
-.main-header h1 {
-  font-size: 42px;
-  margin-bottom: 10px;
-}
-
-.main-header p {
-  color: #777;
-  font-size: 18px;
-}
-
-.summary-grid {
+.checklist {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-  margin-bottom: 28px;
+  gap: 32px;
+  min-width: 0;
 }
 
-.summary-card,
-.progress-card,
-.form-card,
-.category-section {
-  background: white;
-  padding: 26px;
-  border-radius: 26px;
-  margin-bottom: 28px;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.05);
+.title-block {
+  margin: 0 4px -8px;
 }
 
-.summary-card span {
-  color: #777;
-  font-size: 13px;
+h1 {
+  margin: 0;
+  font-size: clamp(34px, 6vw, 48px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
 }
 
-.progress-top,
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.title-block p {
+  margin: 6px 0 0;
+  color: var(--ap-label-2);
+  font-size: 17px;
 }
 
-.progress-top span,
-.section-percent {
-  font-weight: 800;
-  background: #f5f5f5;
-  padding: 10px 14px;
-  border-radius: 999px;
-}
-
-.progress-bar {
-  margin-top: 18px;
-  height: 16px;
-  background: #eee;
-  border-radius: 999px;
+.group {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--ap-glass);
+  -webkit-backdrop-filter: var(--ap-glass-filter);
+  backdrop-filter: var(--ap-glass-filter);
+  border-radius: var(--ap-radius);
+  box-shadow: var(--ap-glass-edge), var(--ap-shadow);
   overflow: hidden;
 }
 
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(135deg, #ffb6c1, #a0c4ff);
+.group.pad {
+  padding: 16px;
 }
 
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px 10px;
+}
+
+.section-head h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.count {
+  color: var(--ap-label-2);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Summary */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.stat {
+  display: grid;
+  gap: 4px;
+  padding: 18px 16px;
+}
+
+.stat + .stat {
+  box-shadow: inset 0.5px 0 0 var(--ap-separator);
+}
+
+.stat-label {
+  color: var(--ap-label-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: clamp(28px, 6vw, 38px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value.accent {
+  color: var(--ap-accent);
+}
+
+.stat-value small {
+  margin-left: 2px;
+  color: var(--ap-label-2);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ap-fill);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ap-accent);
+  transition: width 1s var(--ap-ease);
+}
+
+/* Tabs: segmented control */
 .tabs {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 28px;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 14px;
+  background: var(--ap-fill);
 }
 
 .tabs button {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px;
   border: none;
-  padding: 12px 16px;
-  border-radius: 999px;
-  background: white;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--ap-label);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
-  font-weight: 700;
+  transition: background-color 0.2s var(--ap-ease);
 }
 
 .tabs button.active {
-  background: linear-gradient(135deg, #ffb6c1, #a0c4ff);
-  color: white;
+  background: var(--ap-surface);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* Form */
+.form {
+  display: grid;
+  gap: 16px;
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
 
 .field {
-  margin-bottom: 16px;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
 }
 
-.field label,
-.file-section label {
-  display: block;
-  margin-bottom: 8px;
+.field label {
+  color: var(--ap-label-2);
   font-size: 13px;
-  color: #555;
+  font-weight: 500;
 }
 
-.field input,
-.field select,
-.field textarea,
-.actions select,
-.file-section input {
+input:not([type="checkbox"]):not([type="file"]),
+select,
+textarea {
   width: 100%;
-  padding: 13px;
-  border-radius: 14px;
-  border: 1px solid #eee;
-  background: #fff;
+  min-height: 44px;
   box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: var(--ap-surface-2);
+  color: var(--ap-label);
+  font: inherit;
+  font-size: 16px;
+  transition: border-color 0.2s var(--ap-ease), box-shadow 0.2s var(--ap-ease);
 }
 
-.field textarea {
-  min-height: 90px;
+textarea {
+  min-height: 88px;
   resize: vertical;
 }
 
-.save-btn {
-  width: 100%;
+input:not([type="checkbox"]):not([type="file"]):focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--ap-accent);
+  box-shadow: 0 0 0 3px var(--ap-accent-soft);
+}
+
+::placeholder {
+  color: var(--ap-label-2);
+  opacity: 0.8;
+}
+
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 20px;
   border: none;
-  padding: 14px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #ffb6c1, #a0c4ff);
-  color: white;
-  font-weight: 800;
+  border-radius: 12px;
+  background: var(--ap-accent);
+  color: #fff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
+  transition: transform 0.2s var(--ap-ease), opacity 0.2s var(--ap-ease);
 }
 
+.primary:hover {
+  opacity: 0.92;
+}
+
+.primary:active {
+  transform: scale(0.98);
+}
+
+/* List */
 .empty {
-  padding: 24px;
-  border-radius: 20px;
-  background: #fff7fb;
-  color: #777;
+  margin: 0;
+  padding: 20px 16px;
+  background: var(--ap-glass);
+  -webkit-backdrop-filter: var(--ap-glass-filter);
+  backdrop-filter: var(--ap-glass-filter);
+  box-shadow: var(--ap-glass-edge);
+  border-radius: var(--ap-radius);
+  color: var(--ap-label-2);
+  font-size: 15px;
 }
 
-.item-grid {
+.item {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 18px;
+  gap: 12px;
+  padding: 8px 16px 16px 4px;
 }
 
-.item-card {
-  background: #fff7fb;
-  padding: 20px;
-  border-radius: 22px;
-  border: 1px solid rgba(255, 182, 193, 0.35);
-}
-
-.item-card.completed {
-  background: #f3fff6;
-  border-color: rgba(19, 148, 71, 0.25);
-}
-
-.item-card.completed h3 {
-  text-decoration: line-through;
-  color: #139447;
+.item + .item {
+  box-shadow: inset 0 0.5px 0 var(--ap-separator);
 }
 
 .item-top {
   display: flex;
-  justify-content: space-between;
-  gap: 14px;
   align-items: flex-start;
-  margin-bottom: 18px;
+  gap: 4px;
 }
 
-.item-top h3 {
-  margin: 0;
-}
-
-.item-top p {
-  color: #777;
-  margin-top: 6px;
-}
-
-.due-date {
-  display: inline-block;
-  margin-top: 8px;
-  color: #d63384 !important;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.complete-row {
-  margin: 12px 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  color: #777;
+.check {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
   cursor: pointer;
-  user-select: none;
 }
 
-.complete-row input {
-  width: 16px;
-  height: 16px;
-  accent-color: #ff7eb3;
+.check input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--ap-accent);
+  cursor: pointer;
+}
+
+.item-main {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+  padding-top: 10px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.item.completed .title {
+  color: var(--ap-label-2);
+  text-decoration: line-through;
+}
+
+.meta {
+  color: var(--ap-label-2);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.due {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge {
+  flex: none;
+  margin-top: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--ap-fill);
+  color: var(--ap-label-2);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge.not-yet {
+  background: color-mix(in srgb, var(--ap-red) 14%, transparent);
+  color: var(--ap-red);
+}
+
+.badge.progress {
+  background: color-mix(in srgb, var(--ap-orange) 16%, transparent);
+  color: var(--ap-orange);
+}
+
+.badge.submitted {
+  background: color-mix(in srgb, var(--ap-blue) 13%, transparent);
+  color: var(--ap-blue);
+}
+
+.badge.approved {
+  background: var(--ap-accent-soft);
+  color: var(--ap-accent);
+}
+
+.badge.done {
+  background: var(--ap-fill);
+  color: var(--ap-label-2);
+}
+
+.item-body {
+  display: grid;
+  gap: 12px;
+  margin-left: 48px;
 }
 
 .file-section {
-  margin: 16px 0;
-  background: white;
-  padding: 14px;
-  border-radius: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.file-label {
+  display: grid;
+  gap: 6px;
+  color: var(--ap-label-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.file-label input {
+  max-width: 100%;
+  min-width: 0;
+  color: var(--ap-label);
+  font: inherit;
+  font-size: 14px;
 }
 
 .file-list {
-  margin-top: 14px;
   display: grid;
-  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-radius: 12px;
+  background: var(--ap-surface-2);
+  overflow: hidden;
 }
 
 .file-row {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  align-items: flex-start;
-  background: #fff7fb;
-  padding: 12px;
-  border-radius: 14px;
+  padding: 4px 4px 4px 12px;
+}
+
+.file-row + .file-row {
+  box-shadow: inset 0 0.5px 0 var(--ap-separator);
+}
+
+.file-main {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 0;
 }
 
 .file-link {
-  color: #d63384;
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ap-accent);
+  font-size: 15px;
   text-decoration: none;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.file-link span {
+  min-width: 0;
 }
 
 .preview {
   display: block;
-  margin-top: 10px;
   max-width: 120px;
-  border-radius: 12px;
-}
-
-.remove-file-btn {
-  border: none;
-  padding: 8px 12px;
-  border-radius: 12px;
-  background: #ffe3e3;
-  color: #d33;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.badge {
-  padding: 7px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.not-yet {
-  background: #ffe3e3;
-  color: #d33;
-}
-
-.progress {
-  background: #fff2c7;
-  color: #9a6a00;
-}
-
-.submitted {
-  background: #e6f0ff;
-  color: #2f6cd6;
-}
-
-.approved {
-  background: #efe6ff;
-  color: #7c3aed;
-}
-
-.done {
-  background: #dfffe8;
-  color: #139447;
+  height: auto;
+  border-radius: 10px;
 }
 
 .actions {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.delete-btn {
+.actions select {
+  flex: 1;
+  min-width: 0;
+}
+
+.text-btn {
+  flex: none;
+  min-height: 44px;
+  padding: 0 12px;
   border: none;
-  padding: 12px 16px;
-  border-radius: 14px;
-  background: #ffe3e3;
-  color: #d33;
-  font-weight: 800;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ap-accent);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background-color 0.2s var(--ap-ease);
 }
 
-@media (max-width: 768px) {
-  .main-header h1 {
-    font-size: 32px;
-  }
+.text-btn:hover {
+  background: var(--ap-fill);
+}
 
-  .main-header p {
-    font-size: 15px;
-  }
+.text-btn.danger {
+  color: var(--ap-red);
+}
 
-  .summary-grid,
+@media (min-width: 720px) {
   .form-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  .summary-card,
-  .progress-card,
-  .form-card,
-  .category-section {
+  .group.pad {
     padding: 20px;
-    border-radius: 22px;
   }
 
-  .section-header,
-  .progress-top,
-  .file-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+  .primary {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 420px) {
+  .stat {
+    padding: 16px 12px;
   }
 
-  .actions {
-    grid-template-columns: 1fr;
+  .item-top {
+    flex-wrap: wrap;
+  }
+
+  .item-main {
+    flex-basis: calc(100% - 52px);
+  }
+
+  .badge {
+    margin: 0 0 0 48px;
   }
 }
 </style>

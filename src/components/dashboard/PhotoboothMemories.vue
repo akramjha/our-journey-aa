@@ -1,67 +1,80 @@
 <template>
-  <section class="memory-card">
-    <div class="memory-left">
-      <div class="memory-header">
-        <span class="eyebrow">📸 Memory Highlight</span>
-
-        <h2>Our Photobooth Memories</h2>
-
-        <p>Small moments, big feelings 💖</p>
-      </div>
-
-      <div class="memory-info">
-        <h3>{{ currentMemory.month }}</h3>
-
-        <p>{{ currentMemory.caption }}</p>
-      </div>
-
-      <div class="memory-actions">
-        <button @click="prevMemory">‹</button>
-
-        <div class="dots">
-          <span
-            v-for="(_, index) in memories"
-            :key="index"
-            :class="{ active: selectedIndex === index }"
-            @click="selectedIndex = index"
-          ></span>
-        </div>
-
-        <button @click="nextMemory">›</button>
-      </div>
+  <section class="memories" aria-labelledby="memories-title">
+    <div class="section-head">
+      <h2 id="memories-title">Photobooth memories</h2>
     </div>
 
-    <div class="memory-preview">
-      <img
-        :src="currentMemory.image"
-        :alt="currentMemory.month"
-      />
+    <figure class="frame">
+      <Transition name="fade" mode="out-in">
+        <img
+          v-if="!failed.has(selectedIndex)"
+          :key="selectedIndex"
+          class="photo"
+          :src="currentMemory.image"
+          :alt="`Photobooth strip, ${currentMemory.month}`"
+          @error="failed.add(selectedIndex)"
+        />
+        <div v-else :key="`empty-${selectedIndex}`" class="photo placeholder">
+          Photo coming soon
+        </div>
+      </Transition>
+
+      <figcaption class="caption">
+        <div class="caption-text">
+          <span class="month">{{ currentMemory.month }}</span>
+          <span class="note">{{ currentMemory.caption }}</span>
+        </div>
+
+        <div class="controls">
+          <button class="step" aria-label="Previous memory" @click="prevMemory">
+            <AppIcon name="chevron-left" />
+          </button>
+          <button class="step" aria-label="Next memory" @click="nextMemory">
+            <AppIcon name="chevron-right" />
+          </button>
+        </div>
+      </figcaption>
+    </figure>
+
+    <div class="dots" role="tablist" aria-label="Choose memory">
+      <button
+        v-for="(memory, index) in memories"
+        :key="memory.month"
+        role="tab"
+        class="dot"
+        :class="{ active: selectedIndex === index }"
+        :aria-selected="selectedIndex === index"
+        :aria-label="memory.month"
+        @click="selectedIndex = index"
+      ></button>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
+import AppIcon from "@/components/ui/AppIcon.vue";
 
 const selectedIndex = ref(0);
+const failed = reactive(new Set<number>());
 
 const memories = [
   {
     month: "January 2025",
     image: "/photos/jan2025-1.jpg",
-    caption: "The beginning of our little photobooth tradition 💕"
+    caption: "The beginning of our little photobooth tradition"
   },
 
   {
     month: "February 2025",
     image: "/photos/feb2025-1.jpg",
-    caption: "Another month, another memory with you ❤️"
+    caption: "Another month, another memory with you"
   },
 
   {
     month: "March 2025",
     image: "/photos/mar2025-1.jpg",
-    caption: "Still choosing you, every month ✨"
+    caption: "Still choosing you, every month"
   }
 ];
 
@@ -83,7 +96,7 @@ let interval: number;
 onMounted(() => {
   interval = window.setInterval(() => {
     nextMemory();
-  }, 5000);
+  }, 6000);
 });
 
 onUnmounted(() => {
@@ -92,204 +105,136 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.memory-card {
+.section-head {
+  padding: 0 4px 10px;
+}
+
+.section-head h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.frame {
+  margin: 0;
+  background: var(--ap-glass);
+  -webkit-backdrop-filter: var(--ap-glass-filter);
+  backdrop-filter: var(--ap-glass-filter);
+  border-radius: var(--ap-radius);
+  box-shadow: var(--ap-glass-edge), var(--ap-shadow);
+  overflow: hidden;
+}
+
+.photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: center 35%;
+}
+
+.placeholder {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 22px;
-  align-items: center;
-
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(16px);
-
-  border-radius: 26px;
-  padding: 22px;
-  margin-bottom: 32px;
-
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.04);
-
-  border: 1px solid rgba(255, 182, 193, 0.18);
+  place-items: center;
+  background: var(--ap-surface-2);
+  color: var(--ap-label-2);
+  font-size: 15px;
 }
 
-.eyebrow {
-  display: inline-block;
-
-  color: #d63384;
-
-  font-weight: 900;
-  font-size: 12px;
-
-  margin-bottom: 8px;
-}
-
-.memory-header h2 {
-  margin: 0;
-
-  font-size: 24px;
-  line-height: 1.2;
-
-  color: #d63384;
-}
-
-.memory-header p {
-  margin: 8px 0 0;
-
-  color: #777;
-  font-size: 14px;
-}
-
-.memory-info {
-  margin-top: 22px;
-
-  padding: 16px;
-
-  border-radius: 18px;
-
-  background: linear-gradient(
-    135deg,
-    #fff0f5,
-    #eef6ff
-  );
-}
-
-.memory-info h3 {
-  margin: 0;
-
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.memory-info p {
-  margin-top: 8px;
-
-  color: #666;
-
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.memory-actions {
+.caption {
   display: flex;
   align-items: center;
-  gap: 12px;
-
-  margin-top: 18px;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
 }
 
-.memory-actions button {
-  width: 34px;
-  height: 34px;
+.caption-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
 
-  border: none;
-  border-radius: 999px;
+.month {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
 
-  background: linear-gradient(
-    135deg,
-    #ff9a9e,
-    #a0c4ff
-  );
+.note {
+  color: var(--ap-label-2);
+  font-size: 14px;
+  line-height: 1.4;
+}
 
-  color: white;
+.controls {
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
 
-  font-size: 20px;
-  font-weight: 800;
-
+.step {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ap-fill);
+  color: var(--ap-label);
+  font-size: 18px;
   cursor: pointer;
-
-  transition: 0.25s ease;
+  transition: transform 0.2s var(--ap-ease), background-color 0.2s var(--ap-ease);
 }
 
-.memory-actions button:hover {
-  transform: scale(1.06);
+.step:hover {
+  background: var(--ap-separator);
+}
+
+.step:active {
+  transform: scale(0.92);
 }
 
 .dots {
   display: flex;
-  gap: 7px;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 8px;
 }
 
-.dots span {
-  width: 8px;
-  height: 8px;
-
-  border-radius: 999px;
-
-  background: #ddd;
-
+.dot {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
   cursor: pointer;
-
-  transition: 0.25s ease;
 }
 
-.dots span.active {
-  background: #d63384;
-
-  transform: scale(1.12);
+.dot::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: var(--ap-separator);
+  transition: background-color 0.25s var(--ap-ease), transform 0.25s var(--ap-ease);
 }
 
-.memory-preview {
-  width: 100%;
-  max-width: 520px;
-  height: 220px;
-
-  justify-self: end;
-
-  overflow: hidden;
-  border-radius: 22px;
-
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+.dot.active::after {
+  background: var(--ap-label);
+  transform: scale(1.1);
 }
 
-.memory-preview img {
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
-  object-position: center 35%;
-
-  transition: 0.4s ease;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.35s var(--ap-ease);
 }
 
-.memory-preview:hover img {
-  transform: scale(1.03);
-}
-
-@media (max-width: 900px) {
-  .memory-card {
-    grid-template-columns: 1fr;
-  }
-
-  .memory-preview {
-    max-width: 100%;
-    height: 240px;
-
-    justify-self: stretch;
-  }
-}
-
-@media (max-width: 600px) {
-  .memory-card {
-    padding: 18px;
-    border-radius: 22px;
-  }
-
-  .memory-header h2 {
-    font-size: 22px;
-  }
-
-  .memory-header p {
-    font-size: 13px;
-  }
-
-  .memory-info {
-    padding: 14px;
-  }
-
-  .memory-info h3 {
-    font-size: 18px;
-  }
-
-  .memory-preview {
-    height: 220px;
-  }
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

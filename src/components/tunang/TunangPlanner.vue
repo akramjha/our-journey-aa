@@ -1,153 +1,171 @@
 <template>
-  <div>
-    <header class="main-header">
-      <h1>💍 Tunang Planner</h1>
-      <p>Plan everything nicely, one step at a time ✨</p>
+  <div class="planner">
+    <header class="title-block">
+      <h1>Tunang Planner</h1>
+      <p>Plan everything nicely, one step at a time.</p>
     </header>
 
-    <div class="summary-grid">
-      <div class="summary-card">
-        <span>Total Budget</span>
-        <h2>RM {{ totalPrice.toFixed(2) }}</h2>
+    <section class="group stats" aria-label="Summary">
+      <div class="stat">
+        <span class="stat-label">Total budget</span>
+        <span class="stat-value"><small>RM</small>{{ totalPrice.toFixed(2) }}</span>
       </div>
 
-      <div class="summary-card">
-        <span>Total Items</span>
-        <h2>{{ items.length }}</h2>
+      <div class="stat">
+        <span class="stat-label">Total items</span>
+        <span class="stat-value">{{ items.length }}</span>
       </div>
 
-      <div class="summary-card">
-        <span>Completed</span>
-        <h2>{{ completedCount }}</h2>
+      <div class="stat">
+        <span class="stat-label">Completed</span>
+        <span class="stat-value">{{ completedCount }}</span>
       </div>
-    </div>
+    </section>
 
-    <div class="tabs">
+    <nav class="tabs" aria-label="Categories">
       <button
         v-for="cat in categories"
         :key="cat.key"
+        type="button"
+        class="tab"
         :class="{ active: selectedCategory === cat.key }"
+        :aria-pressed="selectedCategory === cat.key"
         @click="selectedCategory = cat.key"
       >
-        {{ cat.icon }} {{ cat.label }}
+        <AppIcon :name="categoryIcon(cat.key)" />
+        {{ cat.label }}
       </button>
-    </div>
+    </nav>
 
-        <div class="form-card">
-      <h2>{{ editId ? "✏️ Edit Tunang Item" : "➕ Add Tunang Item" }}</h2>
-
-      <div class="form-grid">
-        <div class="field">
-          <label>Category</label>
-          <select v-model="form.category">
-            <option v-for="cat in categories" :key="cat.key" :value="cat.key">
-              {{ cat.label }}
-            </option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Item Name</label>
-          <input v-model="form.name" placeholder="Example: Venue, photobooth, doorgift" />
-        </div>
-
-        <div class="field">
-          <label>Quantity</label>
-          <input type="number" v-model.number="form.quantity" placeholder="Optional" />
-        </div>
-
-        <div class="field">
-          <label>Price (RM)</label>
-          <input type="number" v-model.number="form.price" placeholder="Example: 500" />
-        </div>
-
-        <div class="field">
-          <label>Vendor</label>
-          <input v-model="form.vendor" placeholder="Vendor name" />
-        </div>
-
-        <div class="field">
-          <label>Progress</label>
-          <select v-model="form.progress">
-            <option value="NOT YET">NOT YET</option>
-            <option value="SURVEY">SURVEY</option>
-            <option value="BOOKED">BOOKED</option>
-            <option value="PAID">PAID</option>
-            <option value="DONE">DONE</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Due Date</label>
-          <input type="date" v-model="form.dueDate" />
-        </div>
-
-        <div class="field">
-          <label>Priority</label>
-          <select v-model="form.priority">
-            <option value="LOW">LOW</option>
-            <option value="MEDIUM">MEDIUM</option>
-            <option value="HIGH">HIGH</option>
-            <option value="URGENT">URGENT</option>
-          </select>
-        </div>
+    <section aria-labelledby="form-title">
+      <div class="section-head">
+        <h2 id="form-title">{{ editId ? "Edit tunang item" : "Add tunang item" }}</h2>
       </div>
 
-      <div class="field">
-        <label>Wishlist / Inspiration Link</label>
-        <input v-model="form.wishlistLink" placeholder="Shopee / TikTok / Instagram / Pinterest link" />
+      <div class="group form">
+        <div class="form-grid">
+          <div class="field">
+            <label for="f-category">Category</label>
+            <select id="f-category" v-model="form.category">
+              <option v-for="cat in categories" :key="cat.key" :value="cat.key">
+                {{ cat.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="f-name">Item name</label>
+            <input id="f-name" v-model="form.name" placeholder="Example: Venue, photobooth, doorgift" />
+          </div>
+
+          <div class="field">
+            <label for="f-qty">Quantity</label>
+            <input id="f-qty" type="number" inputmode="numeric" v-model.number="form.quantity" placeholder="Optional" />
+          </div>
+
+          <div class="field">
+            <label for="f-price">Price (RM)</label>
+            <input id="f-price" type="number" inputmode="decimal" v-model.number="form.price" placeholder="Example: 500" />
+          </div>
+
+          <div class="field">
+            <label for="f-vendor">Vendor</label>
+            <input id="f-vendor" v-model="form.vendor" placeholder="Vendor name" />
+          </div>
+
+          <div class="field">
+            <label for="f-progress">Progress</label>
+            <select id="f-progress" v-model="form.progress">
+              <option value="NOT YET">NOT YET</option>
+              <option value="PLANNING">PLANNING</option>
+              <option value="BOOKED">BOOKED</option>
+              <option value="PAID">PAID</option>
+              <option value="DONE">DONE</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="f-due">Due date</label>
+            <input id="f-due" type="date" v-model="form.dueDate" />
+          </div>
+
+          <div class="field">
+            <label for="f-priority">Priority</label>
+            <select id="f-priority" v-model="form.priority">
+              <option value="LOW">LOW</option>
+              <option value="MEDIUM">MEDIUM</option>
+              <option value="HIGH">HIGH</option>
+              <option value="URGENT">URGENT</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-link">Wishlist / inspiration link</label>
+          <input id="f-link" v-model="form.wishlistLink" placeholder="Shopee / TikTok / Instagram / Pinterest link" />
+        </div>
+
+        <div class="field">
+          <label for="f-details">Details</label>
+          <textarea id="f-details" v-model="form.details" placeholder="Example: 500 pax, design theme, vendor notes"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn primary" @click="submitItem">
+            {{ editId ? "Save changes" : "Save item" }}
+          </button>
+
+          <button v-if="editId" type="button" class="btn plain" @click="cancelEdit">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="category-title">
+      <div class="section-head">
+        <h2 id="category-title">
+          <AppIcon :name="categoryIcon(selectedCategory)" />
+          {{ currentCategory?.label }}
+        </h2>
+        <span class="meta">
+          {{ filteredItems.length }} {{ filteredItems.length === 1 ? "item" : "items" }} · RM {{ selectedTotal.toFixed(2) }} · {{ selectedCompletionPercent }}% done
+        </span>
       </div>
 
-      <div class="field">
-        <label>Details</label>
-        <textarea v-model="form.details" placeholder="Example: 500 pax, design theme, vendor notes"></textarea>
-      </div>
+      <p v-if="filteredItems.length === 0" class="empty">
+        Nothing here yet. Add the first item above.
+      </p>
 
-      <div class="form-actions">
-        <button class="save-btn" @click="submitItem">
-          {{ editId ? "Save Changes" : "+ Save Item" }}
-        </button>
-
-        <button v-if="editId" class="cancel-btn" @click="cancelEdit">
-          Cancel
-        </button>
-      </div>
-    </div>
-
-    <div class="category-section">
-      <div class="section-header">
-        <h2>{{ currentCategory?.icon }} {{ currentCategory?.label }}</h2>
-        <p>{{ filteredItems.length }} item(s)</p>
-      </div>
-
-      <div v-if="filteredItems.length === 0" class="empty">
-        No item yet. Add one above ✨
-      </div>
-
-      <div class="item-grid">
-        <div
+      <ul v-else class="group">
+        <li
           v-for="item in filteredItems"
           :key="item.id"
-          :class="['item-card', { completed: isCompleted(item) }]"
+          class="item"
+          :class="{ completed: isCompleted(item) }"
         >
           <div class="item-top">
-            <div>
-              <h3>{{ item.name }}</h3>
-              <p>{{ item.details || "No details" }}</p>
+            <div class="item-main">
+              <h3 class="item-name">{{ item.name }}</h3>
+              <p class="item-details">{{ item.details || "No details yet" }}</p>
 
               <a
                 v-if="item.wishlistLink"
                 :href="item.wishlistLink"
                 target="_blank"
-                class="wish-link"
+                rel="noopener"
+                class="inline-link"
               >
-                🔗 Open Wishlist / Inspiration
+                <AppIcon name="link" />
+                Open wishlist / inspiration
               </a>
             </div>
 
-            <span class="badge" :class="badgeClass(item.progress)">
-              {{ item.progress }}
-            </span>
+            <div class="chips">
+              <span class="chip" :class="badgeClass(item.progress)">
+                {{ item.progress }}
+              </span>
+            </div>
           </div>
 
           <label class="complete-row">
@@ -156,81 +174,71 @@
               :checked="isCompleted(item)"
               @change="toggleCompleted(item)"
             />
-
-            <span>
-              {{ isCompleted(item) ? "Completed" : "Mark as completed" }}
-            </span>
+            <span>{{ isCompleted(item) ? "Completed" : "Mark as completed" }}</span>
           </label>
 
-          <div class="item-info">
+          <dl class="facts">
             <div>
-              <span>Price</span>
-              <strong>RM {{ Number(item.price || 0).toFixed(2) }}</strong>
+              <dt>Price</dt>
+              <dd>RM {{ Number(item.price || 0).toFixed(2) }}</dd>
             </div>
 
             <div>
-              <span>Qty</span>
-              <strong>{{ item.quantity || "-" }}</strong>
+              <dt>Quantity</dt>
+              <dd>{{ item.quantity || "-" }}</dd>
             </div>
 
             <div>
-              <span>Vendor</span>
-              <strong>{{ item.vendor || "-" }}</strong>
+              <dt>Vendor</dt>
+              <dd>{{ item.vendor || "-" }}</dd>
             </div>
-          </div>
-          <div class="file-section">
-            <label>Upload inspiration / receipt / picture</label>
+          </dl>
+
+          <div class="files">
+            <label class="file-label">Upload inspiration / receipt / picture</label>
 
             <input
               type="file"
               multiple
+              class="file-input"
+              aria-label="Upload inspiration, receipt or picture"
               @change="uploadFilesForItem($event, item)"
             />
 
-            <div v-if="item.files && item.files.length > 0" class="file-list">
-              <div
+            <ul v-if="item.files && item.files.length > 0" class="file-list">
+              <li
                 v-for="(file, index) in item.files"
                 :key="file.url"
                 class="file-row"
               >
-                <div>
-                  <a :href="file.url" target="_blank" class="file-link">
-                    {{ isImage(file.type) ? "🖼️" : "📎" }}
-                    {{ file.name }}
-                  </a>
+                <a :href="file.url" target="_blank" rel="noopener" class="file-link">
+                  <AppIcon :name="isImage(file.type) ? 'image' : 'paperclip'" />
+                  {{ file.name }}
+                </a>
 
-                  <img
-                    v-if="isImage(file.type)"
-                    :src="file.url"
-                    class="preview"
-                  />
-                </div>
-
-                <button class="remove-file-btn" @click="removeFileFromItem(item, index)">
+                <button type="button" class="btn danger small" @click="removeFileFromItem(item, index)">
                   Remove
                 </button>
-              </div>
-            </div>
-            <div v-if="imageFiles(item).length > 0" class="gallery">
-            <h4>🖼 Inspiration Gallery</h4>
-
-            <div class="gallery-grid">
-              <a
-                v-for="file in imageFiles(item)"
-                :key="file.url"
-                :href="file.url"
-                target="_blank"
-              >
-                <img :src="file.url" />
-              </a>
-            </div>
+              </li>
+            </ul>
           </div>
 
+          <div v-if="imageFiles(item).length > 0" class="gallery">
+            <a
+              v-for="file in imageFiles(item)"
+              :key="file.url"
+              :href="file.url"
+              target="_blank"
+              rel="noopener"
+            >
+              <img :src="file.url" :alt="file.name" loading="lazy" />
+            </a>
           </div>
 
           <div class="actions">
             <select
               :value="item.progress"
+              aria-label="Progress"
               @change="updateProgress(item.id!, ($event.target as HTMLSelectElement).value)"
             >
               <option value="NOT YET">NOT YET</option>
@@ -240,23 +248,21 @@
               <option value="DONE">DONE</option>
             </select>
 
-            <button class="edit-btn" @click="startEdit(item)">
-              Edit
-            </button>
-
-            <button class="delete-btn" @click="removeItem(item.id!)">
-              Delete
-            </button>
+            <button type="button" class="btn plain" @click="startEdit(item)">Edit</button>
+            <button type="button" class="btn danger" @click="removeItem(item.id!)">Delete</button>
           </div>
-        </div>
-      </div>
-    </div>
-
+        </li>
+      </ul>
+    </section>
   </div>
 </template>
 
+
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+
+import AppIcon from "@/components/ui/AppIcon.vue";
+import type { IconName } from "@/components/ui/AppIcon.vue";
 
 import {
   addTunangItem,
@@ -526,411 +532,582 @@ const formatDate = (date: string) => {
     year: "numeric"
   });
 };
+
+const categoryIcons: Record<string, IconName> = {
+  venue: "landmark",
+  attire: "shirt",
+  hantaran_aina: "gift",
+  hantaran_akram: "gift",
+  food: "utensils",
+  decor: "flower",
+  extra_services: "camera",
+  extra_booth: "cake",
+  doorgift: "gift",
+  dulang_mas_kahwin: "gem"
+};
+
+const categoryIcon = (key: string): IconName => categoryIcons[key] ?? "sparkles";
 </script>
 
 <style scoped>
-.main-header {
-  text-align: center;
-  margin-bottom: 34px;
-}
-
-.main-header h1 {
-  font-size: 42px;
-  margin-bottom: 10px;
-}
-
-.main-header p {
-  color: #777;
-  font-size: 18px;
-}
-
-.summary-grid {
+.planner {
+  --ok: #1a7f37;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-  margin-bottom: 28px;
+  gap: 28px;
+  min-width: 0;
 }
 
-.summary-card {
-  background: white;
-  padding: 24px;
-  border-radius: 24px;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.05);
+@media (prefers-color-scheme: dark) {
+  .planner {
+    --ok: #30d158;
+  }
 }
 
-.summary-card span {
-  color: #777;
-  font-size: 13px;
+.title-block {
+  margin: 0 4px;
 }
 
-.gallery {
-  background: white;
-  padding: 14px;
-  border-radius: 16px;
-  margin-bottom: 16px;
+h1 {
+  margin: 0;
+  font-size: clamp(34px, 6vw, 48px);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
 }
 
-.gallery h4 {
-  margin-top: 0;
+.title-block p {
+  margin: 6px 0 0;
+  color: var(--ap-label-2);
+  font-size: 17px;
 }
 
-.gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.group {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--ap-glass);
+  -webkit-backdrop-filter: var(--ap-glass-filter);
+  backdrop-filter: var(--ap-glass-filter);
+  border-radius: var(--ap-radius);
+  box-shadow: var(--ap-glass-edge), var(--ap-shadow);
+  overflow: hidden;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 0 4px 10px;
+}
+
+.section-head h2 {
+  display: flex;
+  align-items: center;
   gap: 10px;
 }
 
-.gallery-grid img {
-  width: 100%;
-  height: 95px;
-  object-fit: cover;
-  border-radius: 12px;
+.section-head h2 :deep(.icon) {
+  color: var(--ap-accent);
+  font-size: 22px;
 }
 
-.summary-card h2 {
-  margin: 8px 0 0;
+.meta {
+  color: var(--ap-label-2);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
 }
 
+/* Summary */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.stat {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 16px;
+}
+
+.stat-label {
+  color: var(--ap-label-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: clamp(24px, 5vw, 32px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.stat-value small {
+  margin-right: 4px;
+  color: var(--ap-label-2);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* Category tabs */
 .tabs {
   display: flex;
-  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 28px;
+  gap: 8px;
 }
 
-.tabs button {
-  border: none;
-  padding: 12px 16px;
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
   border-radius: 999px;
-  background: white;
+  background: var(--ap-glass);
+  -webkit-backdrop-filter: var(--ap-glass-filter);
+  backdrop-filter: var(--ap-glass-filter);
+  box-shadow: var(--ap-glass-edge);
+  color: var(--ap-label);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
-  font-weight: 700;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+  transition: background-color 0.2s var(--ap-ease), transform 0.2s var(--ap-ease);
 }
 
-.tabs button.active {
-  background: linear-gradient(135deg, #ffb6c1, #a0c4ff);
-  color: white;
+.tab :deep(.icon) {
+  font-size: 18px;
+  color: var(--ap-label-2);
 }
 
-.form-card,
-.category-section {
-  background: white;
-  padding: 28px;
-  border-radius: 28px;
-  margin-bottom: 28px;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.05);
+.tab:hover {
+  background: var(--ap-fill);
+}
+
+.tab:active {
+  transform: scale(0.97);
+}
+
+.tab.active {
+  background: var(--ap-accent);
+  color: #fff;
+  box-shadow: none;
+}
+
+.tab.active :deep(.icon) {
+  color: #fff;
+}
+
+/* Form */
+.form {
+  padding: 16px 16px 6px;
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 16px;
 }
 
 .field {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+  min-width: 0;
 }
 
-.field label {
+.field label,
+.file-label {
   display: block;
-  margin-bottom: 8px;
+  margin: 0 0 6px 4px;
+  color: var(--ap-label-2);
   font-size: 13px;
-  color: #555;
+  font-weight: 500;
 }
 
 .field input,
 .field select,
 .field textarea,
-.actions select {
+.actions select,
+.file-input {
   width: 100%;
-  padding: 13px;
-  border-radius: 14px;
-  border: 1px solid #eee;
-  background: #fff;
+  min-height: 44px;
   box-sizing: border-box;
-  font-size: 14px;
+  padding: 11px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ap-surface-2);
+  color: var(--ap-label);
+  font-family: inherit;
+  font-size: 16px;
+  transition: box-shadow 0.2s var(--ap-ease);
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--ap-label-2);
+  opacity: 0.8;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus,
+.actions select:focus,
+.file-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ap-accent);
 }
 
 .field textarea {
-  min-height: 90px;
+  min-height: 88px;
   resize: vertical;
 }
-.save-btn,
-.cancel-btn,
-.edit-btn,
-.delete-btn,
-.remove-file-btn {
-  border: none;
-  cursor: pointer;
-  font-weight: 800;
-}
 
-.save-btn {
-  width: 100%;
-  border: none;
-  padding: 14px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #ffb6c1, #a0c4ff);
-  color: white;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.section-header {
+.form-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-}
-.edit-btn {
-  padding: 12px 16px;
-  border-radius: 14px;
-  background: #e6f0ff;
-  color: #2f6cd6;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.section-header p {
-  color: #777;
-  font-weight: 700;
+.btn {
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s var(--ap-ease), opacity 0.2s var(--ap-ease), background-color 0.2s var(--ap-ease);
 }
 
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn.primary {
+  flex: 1 1 200px;
+  background: var(--ap-accent);
+  color: #fff;
+}
+
+.btn.primary:hover {
+  opacity: 0.92;
+}
+
+.btn.plain {
+  background: var(--ap-fill);
+  color: var(--ap-label);
+}
+
+.btn.plain:hover {
+  background: var(--ap-separator);
+}
+
+.btn.danger {
+  background: color-mix(in srgb, var(--ap-red) 12%, transparent);
+  color: var(--ap-red);
+}
+
+.btn.danger:hover {
+  background: color-mix(in srgb, var(--ap-red) 20%, transparent);
+}
+
+/* Items */
 .empty {
-  padding: 24px;
-  border-radius: 20px;
-  background: #fff7fb;
-  color: #777;
+  margin: 0;
+  padding: 20px 16px;
+  background: var(--ap-glass);
+  -webkit-backdrop-filter: var(--ap-glass-filter);
+  backdrop-filter: var(--ap-glass-filter);
+  box-shadow: var(--ap-glass-edge);
+  border-radius: var(--ap-radius);
+  color: var(--ap-label-2);
+  font-size: 15px;
 }
 
-.item-grid {
+.item {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 18px;
+  gap: 12px;
+  padding: 16px;
 }
 
-.item-card {
-  background: #fff7fb;
-  padding: 20px;
-  border-radius: 22px;
-  border: 1px solid rgba(255, 182, 193, 0.35);
+.item + .item {
+  box-shadow: inset 0 0.5px 0 var(--ap-separator);
 }
 
-.item-card.completed {
-  background: #f3fff6;
-  border-color: rgba(19, 148, 71, 0.25);
+.item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.item-card.completed h3 {
+.item-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.item-name {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.item.completed .item-name {
+  color: var(--ap-label-2);
   text-decoration: line-through;
-  color: #139447;
+}
+
+.item-details {
+  margin: 0;
+  color: var(--ap-label-2);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.inline-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  margin-top: 4px;
+  color: var(--ap-accent);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.inline-link:hover {
+  text-decoration: underline;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: none;
+}
+
+.chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--ap-fill);
+  color: var(--ap-label-2);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chip.survey,
+.chip.planning,
+.chip.medium {
+  background: color-mix(in srgb, var(--ap-orange) 16%, transparent);
+  color: var(--ap-orange);
+}
+
+.chip.booked,
+.chip.low {
+  background: color-mix(in srgb, var(--ap-blue) 13%, transparent);
+  color: var(--ap-blue);
+}
+
+.chip.paid {
+  background: var(--ap-accent-soft);
+  color: var(--ap-accent);
+}
+
+.chip.done {
+  background: color-mix(in srgb, var(--ok) 15%, transparent);
+  color: var(--ok);
+}
+
+.chip.high,
+.chip.urgent {
+  background: color-mix(in srgb, var(--ap-red) 14%, transparent);
+  color: var(--ap-red);
 }
 
 .complete-row {
-  margin: 12px 0 16px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  color: #777;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 16px;
   cursor: pointer;
   user-select: none;
 }
 
 .complete-row input {
-  width: 16px;
-  height: 16px;
-  accent-color: #ff7eb3;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--ap-accent);
 }
 
-.item-top {
+.facts {
   display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  align-items: flex-start;
-  margin-bottom: 18px;
-}
-
-.item-top h3 {
+  flex-wrap: wrap;
+  gap: 4px 24px;
   margin: 0;
 }
 
-.item-top p {
-  color: #777;
-  margin-top: 6px;
+.facts div {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
 }
 
-.due-date {
-  display: inline-block;
-  margin-top: 8px;
-  color: #d63384 !important;
+.facts dt {
+  color: var(--ap-label-2);
   font-size: 13px;
-  font-weight: 800;
 }
 
-.badge {
-  padding: 7px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
+.facts dd {
+  margin: 0;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
-.not-yet {
-  background: #ffe3e3;
-  color: #d33;
-}
-
-.planning {
-  background: #fff2c7;
-  color: #9a6a00;
-}
-
-.booked {
-  background: #e6f0ff;
-  color: #2f6cd6;
-}
-
-.paid {
-  background: #efe6ff;
-  color: #7c3aed;
-}
-
-.done {
-  background: #dfffe8;
-  color: #139447;
-}
-
-.item-info {
+.files {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 8px;
 }
 
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
+.file-input {
+  padding: 8px 10px;
+  color: var(--ap-label-2);
+  font-size: 14px;
 }
 
-.info-grid div {
-  background: white;
-  padding: 14px;
-  border-radius: 14px;
-}
-
-.info-grid span {
-  display: block;
-  color: #777;
-  font-size: 12px;
-  margin-bottom: 5px;
-}
-
-.file-section {
-  margin: 16px 0;
-  background: white;
-  padding: 14px;
-  border-radius: 16px;
+.file-input::file-selector-button {
+  min-height: 28px;
+  margin-right: 12px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--ap-fill);
+  color: var(--ap-label);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
 }
 
 .file-list {
-  margin-top: 14px;
   display: grid;
-  gap: 12px;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .file-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  align-items: flex-start;
-  background: #fff7fb;
-  padding: 12px;
-  border-radius: 14px;
+  min-width: 0;
 }
 
 .file-link {
-  color: #d63384;
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--ap-accent);
+  font-size: 15px;
   text-decoration: none;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
-.preview {
+.file-link:hover {
+  text-decoration: underline;
+}
+
+.btn.small {
+  flex: none;
+  padding: 0 14px;
+  font-size: 15px;
+}
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 8px;
+}
+
+.gallery img {
   display: block;
-  margin-top: 10px;
-  max-width: 120px;
-  border-radius: 12px;
-}
-
-.remove-file-btn {
-  padding: 8px 12px;
-  border-radius: 12px;
-  background: #ffe3e3;
-  color: #d33;
-}
-
-.item-info div {
-  background: white;
-  padding: 12px;
-  border-radius: 14px;
-}
-
-.item-info span {
-  display: block;
-  color: #777;
-  font-size: 12px;
-  margin-bottom: 5px;
+  width: 100%;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 10px;
 }
 
 .actions {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
 }
 
-.delete-btn {
-  border: none;
-  padding: 12px 16px;
-  border-radius: 14px;
-  background: #ffe3e3;
-  color: #d33;
-  font-weight: 800;
-  cursor: pointer;
+@media (min-width: 560px) {
+  .stats {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-@media (max-width: 768px) {
-  .main-header h1 {
-    font-size: 32px;
+@media (min-width: 900px) {
+  .form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .main-header p {
-    font-size: 15px;
+  .item {
+    padding: 18px 20px;
   }
+}
 
-  .summary-grid,
-  .form-grid,
-  .item-info {
-    grid-template-columns: 1fr;
-  }
-
-  .form-card,
-  .category-section,
-  .summary-card {
-    padding: 20px;
-    border-radius: 22px;
-  }
-
-  .section-header,
+@media (max-width: 480px) {
   .item-top {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+  }
+
+  .chips {
+    justify-content: flex-start;
   }
 
   .actions {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .actions select {
+    grid-column: 1 / -1;
   }
 }
 </style>

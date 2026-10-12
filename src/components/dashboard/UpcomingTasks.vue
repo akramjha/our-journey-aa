@@ -1,40 +1,29 @@
 <template>
-  <section class="upcoming-card">
-    <div class="section-header">
-      <div>
-        <h2>📝 Upcoming Tasks</h2>
-        <p>Things to focus on next</p>
-      </div>
-
-      <span>{{ upcomingTasks.length }} task(s)</span>
+  <section class="tasks" aria-labelledby="tasks-title">
+    <div class="section-head">
+      <h2 id="tasks-title">Upcoming</h2>
+      <span v-if="upcomingTasks.length" class="count">
+        {{ upcomingTasks.length }} {{ upcomingTasks.length === 1 ? "task" : "tasks" }}
+      </span>
     </div>
 
-    <div v-if="upcomingTasks.length === 0" class="empty">
-      No upcoming tasks yet ✨
-    </div>
+    <p v-if="upcomingTasks.length === 0" class="empty">
+      Nothing due. Enjoy the calm.
+    </p>
 
-    <div v-else class="task-list">
-      <div
-        v-for="task in upcomingTasks"
-        :key="task.id"
-        class="task-item"
-      >
-        <div>
-          <div class="task-top">
-            <span class="module-badge">{{ task.module }}</span>
-            <span class="status-badge" :class="task.statusClass">
-              {{ task.statusText }}
-            </span>
-          </div>
-
-          <h3>{{ task.title }}</h3>
-
-          <p>
-            📅 {{ formatDate(task.dueDate) }}
-          </p>
+    <ul v-else class="list">
+      <li v-for="task in upcomingTasks" :key="task.id" class="row">
+        <div class="row-main">
+          <span class="title">{{ task.title }}</span>
+          <span class="meta">
+            {{ task.module }} · {{ formatDate(task.dueDate) }}
+          </span>
         </div>
-      </div>
-    </div>
+        <span class="status" :class="task.statusClass">
+          {{ task.statusText }}
+        </span>
+      </li>
+    </ul>
   </section>
 </template>
 
@@ -89,20 +78,20 @@ const getStatus = (date: string) => {
 
   if (days <= 3) {
     return {
-      statusText: `${days} day(s) left`,
+      statusText: `${days} ${days === 1 ? "day" : "days"} left`,
       statusClass: "urgent"
     };
   }
 
   if (days <= 7) {
     return {
-      statusText: `${days} day(s) left`,
+      statusText: `${days} ${days === 1 ? "day" : "days"} left`,
       statusClass: "soon"
     };
   }
 
   return {
-    statusText: `${days} day(s) left`,
+    statusText: `${days} ${days === 1 ? "day" : "days"} left`,
     statusClass: "normal"
   };
 };
@@ -163,132 +152,108 @@ const formatDate = (date: string) => {
 </script>
 
 <style scoped>
-.upcoming-card {
-  background: white;
-  padding: 28px;
-  border-radius: 28px;
-  margin: 36px 0;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-}
-
-.section-header {
+.section-head {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 16px;
-  align-items: center;
-  margin-bottom: 20px;
+  padding: 0 4px 10px;
 }
 
-.section-header h2 {
+.section-head h2 {
   margin: 0;
-  color: #d63384;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
-.section-header p {
-  margin: 6px 0 0;
-  color: #777;
-}
-
-.section-header span {
-  background: #fff0f5;
-  color: #d63384;
-  padding: 10px 14px;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 13px;
+.count {
+  color: var(--ap-label-2);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
 }
 
 .empty {
-  padding: 24px;
-  border-radius: 20px;
-  background: #fff7fb;
-  color: #777;
-}
-
-.task-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
-}
-
-.task-item {
-  background: #fff7fb;
-  border: 1px solid rgba(255, 182, 193, 0.35);
-  border-radius: 22px;
-  padding: 18px;
-}
-
-.task-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.module-badge,
-.status-badge {
-  padding: 7px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 900;
-}
-
-.module-badge {
-  background: white;
-  color: #d63384;
-}
-
-.status-badge.overdue {
-  background: #ffe3e3;
-  color: #d33;
-}
-
-.status-badge.today {
-  background: #efe6ff;
-  color: #7c3aed;
-}
-
-.status-badge.urgent {
-  background: #d63384;
-  color: white;
-}
-
-.status-badge.soon {
-  background: #fff2c7;
-  color: #9a6a00;
-}
-
-.status-badge.normal {
-  background: #e6f0ff;
-  color: #2f6cd6;
-}
-
-.task-item h3 {
   margin: 0;
-  color: #333;
+  padding: 20px 16px;
+  background: var(--ap-glass);
+  -webkit-backdrop-filter: var(--ap-glass-filter);
+  backdrop-filter: var(--ap-glass-filter);
+  box-shadow: var(--ap-glass-edge);
+  border-radius: var(--ap-radius);
+  color: var(--ap-label-2);
+  font-size: 15px;
 }
 
-.task-item p {
-  margin: 8px 0 0;
-  color: #777;
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--ap-glass);
+  -webkit-backdrop-filter: var(--ap-glass-filter);
+  backdrop-filter: var(--ap-glass-filter);
+  border-radius: var(--ap-radius);
+  box-shadow: var(--ap-glass-edge), var(--ap-shadow);
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 16px;
+}
+
+.row + .row {
+  box-shadow: inset 0 0.5px 0 var(--ap-separator);
+}
+
+.row-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  color: var(--ap-label-2);
   font-size: 13px;
-  font-weight: 700;
 }
 
-@media (max-width: 768px) {
-  .upcoming-card {
-    padding: 20px;
-    border-radius: 22px;
-  }
+.status {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--ap-fill);
+  color: var(--ap-label-2);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
 
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.status.overdue {
+  background: color-mix(in srgb, var(--ap-red) 14%, transparent);
+  color: var(--ap-red);
+}
 
-  .task-list {
-    grid-template-columns: 1fr;
-  }
+.status.today {
+  background: var(--ap-accent-soft);
+  color: var(--ap-accent);
+}
+
+.status.urgent {
+  background: color-mix(in srgb, var(--ap-orange) 16%, transparent);
+  color: var(--ap-orange);
+}
+
+.status.soon {
+  background: color-mix(in srgb, var(--ap-blue) 13%, transparent);
+  color: var(--ap-blue);
 }
 </style>
