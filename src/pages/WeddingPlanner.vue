@@ -63,6 +63,8 @@
             </p>
           </section>
 
+          <JourneyTimeline :milestones="milestones" :today="today" :open-due-dates="openDueDates" />
+
           <UpcomingTasks />
 
           <BudgetOverview :rows="budgetRows" :budget="budget" />
@@ -124,6 +126,7 @@ import type { IconName } from "@/components/ui/AppIcon.vue";
 import PhotoboothMemories from "@/components/dashboard/PhotoboothMemories.vue";
 import UpcomingTasks from "@/components/dashboard/UpcomingTasks.vue";
 import BudgetOverview from "@/components/dashboard/BudgetOverview.vue";
+import JourneyTimeline from "@/components/dashboard/JourneyTimeline.vue";
 import QuickAddModal from "@/components/dashboard/QuickAddModal.vue";
 import { useDashboard } from "@/composables/useDashboard";
 import { useCountUp } from "@/composables/useCountUp";
@@ -150,6 +153,12 @@ const {
   tunangProgress,
 
   budgetRows,
+  isSettled,
+
+  checklistItems,
+  tunangItems,
+  nikahItems,
+  weddingItems,
 
   totalSavingsTarget,
   totalGoldWeight,
@@ -162,6 +171,7 @@ const coupleSettings = ref({
   startDate: "2024-01-01",
   engagementDate: "2026-06-01",
   weddingDate: "2026-12-31",
+  nikahDate: "",
   loveNote: "Every step we take is closer to our dream",
   totalBudget: 0
 });
@@ -230,6 +240,26 @@ const countdownTo = (value: string, pastLabel: string): Countdown => {
   if (days === 0) return { kind: "today", label: "Today" };
   return { kind: "past", label: pastLabel };
 };
+
+const milestones = computed(() => [
+  { key: "start", label: "Our start", date: parseLocalDate(coupleSettings.value.startDate) },
+  { key: "engagement", label: "Engagement", date: parseLocalDate(coupleSettings.value.engagementDate) },
+  { key: "nikah", label: "Nikah", date: parseLocalDate(coupleSettings.value.nikahDate) },
+  { key: "wedding", label: "Wedding", date: parseLocalDate(coupleSettings.value.weddingDate) }
+]);
+
+// Due dates of everything across the planners that isn't done yet.
+const openDueDates = computed(() =>
+  [
+    ...checklistItems.value,
+    ...tunangItems.value,
+    ...nikahItems.value,
+    ...weddingItems.value
+  ]
+    .filter((item: any) => item.dueDate && !isSettled(item))
+    .map((item: any) => parseLocalDate(item.dueDate))
+    .filter((d): d is Date => d !== null)
+);
 
 const weddingCountdown = computed(() => countdownTo(coupleSettings.value.weddingDate, "Married"));
 const engagementCountdown = computed(() => countdownTo(coupleSettings.value.engagementDate, "Celebrated"));
