@@ -35,10 +35,38 @@
           <span class="meta">
             {{ task.module }} · {{ formatDate(task.dueDate) }}
           </span>
+          <button
+            v-if="task.statusClass === 'overdue'"
+            type="button"
+            class="link"
+            :aria-expanded="rescheduling === task.id"
+            :aria-controls="`move-${task.id}`"
+            @click="toggleReschedule(task.id)"
+          >
+            {{ rescheduling === task.id ? "Cancel" : "Reschedule" }}
+          </button>
         </div>
         <span class="status" :class="task.statusClass">
           {{ task.statusText }}
         </span>
+
+        <div v-if="rescheduling === task.id" :id="`move-${task.id}`" class="move">
+          <button type="button" class="chip" :disabled="pending.has(task.id)" @click="moveTo(task, daysFromToday(1))">
+            Tomorrow
+          </button>
+          <button type="button" class="chip" :disabled="pending.has(task.id)" @click="moveTo(task, daysFromToday(7))">
+            Next week
+          </button>
+          <label class="pick">
+            <span class="sr-only">New due date for {{ task.title }}</span>
+            <input
+              type="date"
+              :min="daysFromToday(0)"
+              :disabled="pending.has(task.id)"
+              @change="moveTo(task, ($event.target as HTMLInputElement).value)"
+            />
+          </label>
+        </div>
       </li>
     </ul>
 
@@ -191,6 +219,38 @@ const updaters = {
 };
 
 const pending = reactive(new Set<string>());
+const rescheduling = ref<string | null>(null);
+
+const toggleReschedule = (id: string) => {
+  rescheduling.value = rescheduling.value === id ? null : id;
+  error.value = "";
+};
+
+// Local "YYYY-MM-DD", the format the planners store due dates in.
+const daysFromToday = (days: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+const moveTo = async (
+  task: { id: string; key: keyof typeof updaters; rawId: string; title: string },
+  dueDate: string
+) => {
+  if (!dueDate || pending.has(task.id)) return;
+  error.value = "";
+  pending.add(task.id);
+
+  try {
+    await updaters[task.key](task.rawId, { dueDate });
+    rescheduling.value = null;
+  } catch (err) {
+    console.error("Failed to reschedule task:", err);
+    error.value = `Couldn't move "${task.title}". Try again.`;
+  } finally {
+    pending.delete(task.id);
+  }
+};
 const error = ref("");
 
 const complete = async (task: { id: string; key: keyof typeof updaters; rawId: string; title: string }) => {
@@ -265,6 +325,7 @@ const formatDate = (date: string) => {
 .row {
   position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding: 13px 16px;
@@ -353,6 +414,81 @@ const formatDate = (date: string) => {
 
 .row.done .title {
   text-decoration: line-through;
+}
+
+.link {
+  justify-self: start;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ap-accent);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.move {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0 2px 44px;
+}
+
+.chip {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ap-accent-soft);
+  color: var(--ap-accent);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s var(--ap-ease), opacity 0.2s var(--ap-ease);
+}
+
+.chip:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.chip:disabled,
+.pick input:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.pick input {
+  min-height: 36px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--ap-fill);
+  color: var(--ap-label);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.link:focus-visible,
+.chip:focus-visible,
+.pick input:focus-visible,
+.check:focus-visible {
+  outline: 2px solid var(--ap-accent);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .error {

@@ -2,6 +2,9 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
 import "./styles/apple.css";
+import { applyTheme, theme } from "./composables/useTheme";
+
+applyTheme(theme.value);
 
 createApp(App).use(router).mount("#app");
 

@@ -67,6 +67,27 @@
           </div>
         </section>
 
+        <section aria-labelledby="appearance-title">
+          <h2 id="appearance-title" class="section-head">Appearance</h2>
+          <div class="group">
+            <div class="theme" role="radiogroup" aria-labelledby="theme-label">
+              <span id="theme-label" class="theme-label">Theme on this device</span>
+              <div class="segmented">
+                <label v-for="option in themeOptions" :key="option.value">
+                  <input
+                    type="radio"
+                    name="theme"
+                    :value="option.value"
+                    :checked="theme === option.value"
+                    @change="setTheme(option.value)"
+                  />
+                  <span>{{ option.label }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section aria-labelledby="note-title">
           <h2 id="note-title" class="section-head">Love note</h2>
           <div class="group">
@@ -88,6 +109,8 @@ import { onMounted, ref } from "vue";
 import AppHeader from "@/components/AppHeader.vue";
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { useRouter } from "vue-router";
+import { theme, setTheme } from "@/composables/useTheme";
+import type { ThemeChoice } from "@/composables/useTheme";
 
 import {
   saveCoupleSettings,
@@ -109,7 +132,7 @@ const form = ref({
   totalBudget: 0,
 
   loveNote:
-    "Every step we take is closer to our dream 💍"
+    "Every step we take is closer to our dream"
 });
 
 onMounted(async () => {
@@ -123,6 +146,12 @@ onMounted(async () => {
   }
 });
 
+const themeOptions: { value: ThemeChoice; label: string }[] = [
+  { value: "system", label: "System" },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" }
+];
+
 const router = useRouter();
 
 const saveSettings = async () => {
@@ -132,6 +161,62 @@ const saveSettings = async () => {
 </script>
 
 <style scoped>
+.theme {
+  padding: 16px;
+}
+
+.theme-label {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--ap-label-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  padding: 2px;
+  border-radius: 12px;
+  background: var(--ap-fill);
+}
+
+.segmented label {
+  position: relative;
+}
+
+.segmented input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.segmented span {
+  display: grid;
+  place-items: center;
+  min-height: 40px;
+  border-radius: 10px;
+  color: var(--ap-label-2);
+  font-size: 15px;
+  font-weight: 500;
+  transition: background-color 0.2s var(--ap-ease), color 0.2s var(--ap-ease);
+}
+
+.segmented input:checked + span {
+  background: var(--ap-surface);
+  color: var(--ap-label);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.segmented input:focus-visible + span {
+  outline: 2px solid var(--ap-accent);
+  outline-offset: 2px;
+}
+
 .shell {
   max-width: 640px;
   margin: 0 auto;
