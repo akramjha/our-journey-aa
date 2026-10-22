@@ -1,9 +1,11 @@
 <template>
   <div class="ap-page">
-    <AppHeader />
-    <main class="shell">
-      <GoldSavings />
-    </main>
+    <div class="shell">
+      <AppHeader />
+      <main>
+        <GoldSavings />
+      </main>
+    </div>
   </div>
 </template>
 

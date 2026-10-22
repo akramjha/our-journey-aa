@@ -73,6 +73,14 @@ body:has(.ap-page) {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   -webkit-text-size-adjust: 100%;
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Room for the fixed bottom tab bar on phones. */
+@media (max-width: 719px) {
+  .ap-page {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
 }
 
 .ap-page ::selection {
