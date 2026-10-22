@@ -46,6 +46,23 @@
           </div>
         </section>
 
+        <section aria-labelledby="budget-title">
+          <h2 id="budget-title" class="section-head">Budget</h2>
+          <div class="group">
+            <div class="field">
+              <label for="totalBudget">Total wedding budget (RM)</label>
+              <input
+                id="totalBudget"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                v-model.number="form.totalBudget"
+                placeholder="Example: 40000"
+              />
+            </div>
+          </div>
+        </section>
+
         <section aria-labelledby="note-title">
           <h2 id="note-title" class="section-head">Love note</h2>
           <div class="group">
@@ -82,6 +99,8 @@ const form = ref({
   engagementDate: "2026-06-01",
 
   weddingDate: "2026-12-31",
+
+  totalBudget: 0,
 
   loveNote:
     "Every step we take is closer to our dream 💍"

@@ -1,4 +1,12 @@
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onUnmounted,
+  provide,
+  inject,
+  type InjectionKey
+} from "vue";
 
 import { listenChecklistItems } from "@/services/checklistService";
 import { listenWeddingItems } from "@/services/weddingService";
@@ -7,6 +15,8 @@ import { listenTunangItems } from "@/services/tunangService";
 import { listenContributions } from "@/services/savingsService";
 
 const GOLD_TARGET_GRAMS = 96;
+
+const DASHBOARD_KEY: InjectionKey<ReturnType<typeof useDashboard>> = Symbol("dashboard");
 
 export function useDashboard() {
   const loading = ref(true);
@@ -22,25 +32,46 @@ export function useDashboard() {
   const loadDashboardData = () => {
     loading.value = true;
 
+    // Stay in the loading state until every source has delivered its first
+    // snapshot, with a timeout so an offline or failing source can't hang the page.
+    let pending = 5;
+    const firstSnapshot = () => {
+      pending = Math.max(0, pending - 1);
+      if (pending === 0) loading.value = false;
+    };
+    const seen = new Set<string>();
+    const once = (key: string) => {
+      if (seen.has(key)) return;
+      seen.add(key);
+      firstSnapshot();
+    };
+    const timeout = setTimeout(() => (loading.value = false), 6000);
+    unsubscribers.push(() => clearTimeout(timeout));
+
     try {
       const unsubChecklist = listenChecklistItems((items) => {
         checklistItems.value = items;
+        once("checklist");
       });
 
       const unsubWedding = listenWeddingItems((items) => {
         weddingItems.value = items;
+        once("wedding");
       });
 
       const unsubNikah = listenNikahItems((items) => {
         nikahItems.value = items;
+        once("nikah");
       });
 
       const unsubTunang = listenTunangItems((items) => {
         tunangItems.value = items;
+        once("tunang");
       });
 
       const unsubSavings = listenContributions((items) => {
         savingsItems.value = items;
+        once("savings");
       });
 
       unsubscribers.push(
@@ -50,8 +81,6 @@ export function useDashboard() {
         unsubTunang,
         unsubSavings
       );
-
-      loading.value = false;
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
       loading.value = false;
@@ -133,6 +162,25 @@ export function useDashboard() {
     );
   });
 
+  // Budget: sum of item prices per planner, the same rule the planner pages use.
+  const isSettled = (item: any) => isCompleted(item) || item.progress === "PAID";
+
+  const sumPrices = (items: any[], filter: (item: any) => boolean = () => true) =>
+    items.filter(filter).reduce((total, item) => total + Number(item.price || 0), 0);
+
+  const budgetRows = computed(() =>
+    [
+      { key: "tunang", label: "Tunang", items: tunangItems.value },
+      { key: "nikah", label: "Nikah", items: nikahItems.value },
+      { key: "wedding", label: "Wedding", items: weddingItems.value }
+    ].map(({ key, label, items }) => ({
+      key,
+      label,
+      planned: sumPrices(items),
+      settled: sumPrices(items, isSettled)
+    }))
+  );
+
   const totalSavingsCurrent = computed(() => {
     return savingsItems.value.reduce((total, item) => {
       return total + Number(item.purchasePrice || 0);
@@ -159,7 +207,7 @@ export function useDashboard() {
     );
   });
 
-  return {
+  const api = {
     loading,
 
     checklistItems,
@@ -184,6 +232,8 @@ export function useDashboard() {
     completedTunangItems,
     tunangProgress,
 
+    budgetRows,
+
     totalSavingsTarget,
     totalSavingsCurrent,
     totalGoldWeight,
@@ -191,4 +241,14 @@ export function useDashboard() {
 
     loadDashboardData,
   };
+
+  // Children of the page that owns the listeners reuse them via useDashboardContext().
+  provide(DASHBOARD_KEY, api);
+
+  return api;
+}
+
+/** Shared dashboard data from the nearest provider, or its own listeners when there is none. */
+export function useDashboardContext() {
+  return inject(DASHBOARD_KEY, null) ?? useDashboard();
 }

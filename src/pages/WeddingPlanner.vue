@@ -18,70 +18,54 @@
 
       <div v-else class="columns">
         <div class="column">
-          <section class="group countdown" aria-label="Countdowns">
-            <div class="stat">
-              <span class="stat-label">Wedding</span>
-              <span class="stat-value">{{ daysLeft }}<small>days</small></span>
-              <span class="stat-note">until our big day</span>
+          <section class="group hero" aria-label="Countdowns">
+            <div class="hero-main">
+              <p class="hero-value">
+                <template v-if="weddingCountdown.kind === 'days'">
+                  <span class="sr-only">{{ weddingCountdown.value }}</span>
+                  <span aria-hidden="true" class="roll">{{ heroDays }}</span>
+                  <small>{{ weddingCountdown.value === 1 ? "day" : "days" }} to go</small>
+                </template>
+                <template v-else>{{ weddingCountdown.label }}</template>
+              </p>
+              <p class="hero-date">
+                <template v-if="weddingDateLabel">Our wedding · {{ weddingDateLabel }}</template>
+                <template v-else>Set your wedding date in settings</template>
+              </p>
+              <p v-if="milestone" class="hero-milestone">{{ milestone }}</p>
             </div>
 
-            <div class="stat">
-              <span class="stat-label">Engagement</span>
-              <span class="stat-value">{{ engagementDaysLeft }}<small>days</small></span>
-              <span class="stat-note">until we celebrate</span>
-            </div>
-
-            <div class="stat">
-              <span class="stat-label">Together</span>
-              <span class="stat-value">{{ daysTogether }}<small>days</small></span>
-              <span class="stat-note">and still counting</span>
-            </div>
-          </section>
-
-          <blockquote class="note">{{ todayNote }}</blockquote>
-
-          <section aria-labelledby="progress-title">
-            <div class="section-head">
-              <h2 id="progress-title">Progress</h2>
-            </div>
-
-            <ul class="group list">
-              <li v-for="item in progressRows" :key="item.label" class="progress-row">
-                <div class="progress-top">
-                  <span class="row-title">{{ item.label }}</span>
-                  <span class="row-value">{{ item.percent }}%</span>
-                </div>
-
-                <div
-                  class="bar"
-                  role="progressbar"
-                  :aria-valuenow="item.percent"
-                  aria-valuemin="0"
-                  aria-valuemax="100"
-                  :aria-label="item.label"
-                >
-                  <div
-                    class="bar-fill"
-                    :style="{ width: (ready ? item.percent : 0) + '%' }"
-                  ></div>
-                </div>
-
-                <span class="row-detail">{{ item.detail }}</span>
-              </li>
-
-              <li class="progress-row plain">
-                <div class="progress-top">
-                  <span class="row-title">Nikah &amp; Tunang</span>
-                  <span class="row-value">{{ totalNikahItems + totalTunangItems }} items</span>
-                </div>
-                <span class="row-detail">
-                  {{ totalNikahItems }} nikah · {{ totalTunangItems }} tunang
+            <div class="hero-side">
+              <div class="stat">
+                <span class="stat-value">
+                  <template v-if="engagementCountdown.kind === 'days'">
+                    {{ engagementCountdown.value }}<small>{{ engagementCountdown.value === 1 ? "day" : "days" }}</small>
+                  </template>
+                  <template v-else>{{ engagementCountdown.label }}</template>
                 </span>
-              </li>
-            </ul>
+                <span class="stat-note">
+                  {{ engagementCountdown.kind === "past" ? "Engagement" : "until engagement" }}
+                </span>
+              </div>
+
+              <div class="stat">
+                <span class="stat-value">
+                  <template v-if="daysTogether !== null">{{ daysTogether.toLocaleString() }}<small>days</small></template>
+                  <template v-else>—</template>
+                </span>
+                <span class="stat-note">{{ togetherLabel ? `${togetherLabel}, still counting` : "together, and still counting" }}</span>
+              </div>
+            </div>
+
+            <p v-if="todayNote" class="hero-note">
+              <AppIcon name="heart" />
+              <span>{{ todayNote }}</span>
+            </p>
           </section>
 
           <UpcomingTasks />
+
+          <BudgetOverview :rows="budgetRows" :budget="budget" />
         </div>
 
         <div class="column">
@@ -101,8 +85,25 @@
               >
                 <span class="module-icon"><AppIcon :name="module.icon" /></span>
                 <span class="module-text">
-                  <span class="row-title">{{ module.title }}</span>
-                  <span class="row-detail">{{ module.description }}</span>
+                  <span class="module-top">
+                    <span class="row-title">{{ module.title }}</span>
+                    <span class="row-value">{{ module.value }}</span>
+                  </span>
+                  <span
+                    v-if="module.percent !== null"
+                    class="bar"
+                    role="progressbar"
+                    :aria-valuenow="module.percent"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    :aria-label="module.title"
+                  >
+                    <span
+                      class="bar-fill"
+                      :style="{ width: (ready ? module.percent : 0) + '%' }"
+                    ></span>
+                  </span>
+                  <span class="row-detail">{{ module.detail }}</span>
                 </span>
                 <span class="chevron"><AppIcon name="chevron-right" /></span>
               </RouterLink>
@@ -122,8 +123,10 @@ import AppIcon from "@/components/ui/AppIcon.vue";
 import type { IconName } from "@/components/ui/AppIcon.vue";
 import PhotoboothMemories from "@/components/dashboard/PhotoboothMemories.vue";
 import UpcomingTasks from "@/components/dashboard/UpcomingTasks.vue";
+import BudgetOverview from "@/components/dashboard/BudgetOverview.vue";
 import QuickAddModal from "@/components/dashboard/QuickAddModal.vue";
 import { useDashboard } from "@/composables/useDashboard";
+import { useCountUp } from "@/composables/useCountUp";
 import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { listenCoupleSettings } from "@/services/coupleService";
 
@@ -139,7 +142,14 @@ const {
   weddingProgress,
 
   totalNikahItems,
+  completedNikahItems,
+  nikahProgress,
+
   totalTunangItems,
+  completedTunangItems,
+  tunangProgress,
+
+  budgetRows,
 
   totalSavingsTarget,
   totalGoldWeight,
@@ -152,10 +162,21 @@ const coupleSettings = ref({
   startDate: "2024-01-01",
   engagementDate: "2026-06-01",
   weddingDate: "2026-12-31",
-  loveNote: "Every step we take is closer to our dream"
+  loveNote: "Every step we take is closer to our dream",
+  totalBudget: 0
 });
 
+const budget = computed(() => Math.max(0, Number(coupleSettings.value.totalBudget) || 0));
+
+// Bars start empty and fill once the dashboard has data: the page's one entrance.
+const ready = ref(false);
+
+// Midnight of the current local day; refreshed so a tab left open stays correct.
+const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const today = ref(startOfDay(new Date()));
+
 let unsubscribeSettings: (() => void) | null = null;
+let clock: ReturnType<typeof setInterval> | null = null;
 
 onMounted(() => {
   unsubscribeSettings = listenCoupleSettings((data) => {
@@ -164,14 +185,17 @@ onMounted(() => {
       ...data
     };
   });
+
+  clock = setInterval(() => {
+    const now = startOfDay(new Date());
+    if (now.getTime() !== today.value.getTime()) today.value = now;
+  }, 60_000);
 });
 
 onUnmounted(() => {
   if (unsubscribeSettings) unsubscribeSettings();
+  if (clock) clearInterval(clock);
 });
-
-// Bars start empty and fill once the dashboard has data: the page's one entrance.
-const ready = ref(false);
 
 watch(
   loading,
@@ -181,36 +205,89 @@ watch(
   { immediate: true }
 );
 
-const today = new Date();
+// "YYYY-MM-DD" parsed as a local calendar date, not UTC midnight, so the
+// day count never shifts by one west of Greenwich.
+const parseLocalDate = (value: string): Date | null => {
+  const [y, m, d] = String(value ?? "").split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const date = new Date(y, m - 1, d);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const dayDiff = (from: Date, to: Date) => Math.round((to.getTime() - from.getTime()) / DAY_MS);
+
+type Countdown =
+  | { kind: "days"; value: number }
+  | { kind: "today" | "past" | "unset"; label: string };
+
+const countdownTo = (value: string, pastLabel: string): Countdown => {
+  const date = parseLocalDate(value);
+  if (!date) return { kind: "unset", label: "—" };
+
+  const days = dayDiff(today.value, date);
+  if (days > 0) return { kind: "days", value: days };
+  if (days === 0) return { kind: "today", label: "Today" };
+  return { kind: "past", label: pastLabel };
+};
+
+const weddingCountdown = computed(() => countdownTo(coupleSettings.value.weddingDate, "Married"));
+const engagementCountdown = computed(() => countdownTo(coupleSettings.value.engagementDate, "Celebrated"));
 
 const daysTogether = computed(() => {
-  const start = new Date(coupleSettings.value.startDate);
-
-  return Math.floor(
-    (today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const start = parseLocalDate(coupleSettings.value.startDate);
+  return start ? Math.max(0, dayDiff(start, today.value)) : null;
 });
 
-const engagementDaysLeft = computed(() => {
-  const engagement = new Date(coupleSettings.value.engagementDate);
+// The hero number rolls up from zero once, then follows any later change.
+const heroTarget = computed(() =>
+  weddingCountdown.value.kind === "days" ? weddingCountdown.value.value : null
+);
+const heroDays = useCountUp(heroTarget);
 
-  return Math.max(
-    0,
-    Math.floor(
-      (engagement.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-    )
-  );
+const MILESTONES: Record<number, string> = {
+  1: "Tomorrow. Almost there, sayang.",
+  7: "One week to go.",
+  14: "Two weeks to go.",
+  30: "One month to go. Hold hands tight.",
+  50: "50 days to go. The countdown is truly on.",
+  100: "100 days to go. Alhamdulillah for every step so far."
+};
+
+const milestone = computed(() => {
+  const c = weddingCountdown.value;
+  if (c.kind === "today") return "Today is the day. Congratulations, you two.";
+  if (c.kind === "past") return "Alhamdulillah. Here's to the journey ahead.";
+  return c.kind === "days" ? MILESTONES[c.value] ?? "" : "";
 });
 
-const daysLeft = computed(() => {
-  const wedding = new Date(coupleSettings.value.weddingDate);
+// Calendar-aware "2 years, 3 months, 12 days" since the start date.
+const togetherLabel = computed(() => {
+  const start = parseLocalDate(coupleSettings.value.startDate);
+  if (!start || start > today.value) return "";
 
-  return Math.max(
-    0,
-    Math.floor(
-      (wedding.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-    )
-  );
+  let years = today.value.getFullYear() - start.getFullYear();
+  let months = today.value.getMonth() - start.getMonth();
+  let days = today.value.getDate() - start.getDate();
+
+  if (days < 0) {
+    months -= 1;
+    days += new Date(today.value.getFullYear(), today.value.getMonth(), 0).getDate();
+  }
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  const unit = (n: number, word: string) => (n ? `${n} ${word}${n === 1 ? "" : "s"}` : "");
+  return [unit(years, "year"), unit(months, "month"), unit(days, "day")].filter(Boolean).join(", ");
+});
+
+const weddingDateLabel = computed(() => {
+  const date = parseLocalDate(coupleSettings.value.weddingDate);
+  return date
+    ? date.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+    : "";
 });
 
 const todayNote = computed(() => coupleSettings.value.loveNote);
@@ -218,61 +295,52 @@ const todayNote = computed(() => coupleSettings.value.loveNote);
 const clamp = (value: number) =>
   Math.min(100, Math.max(0, Math.round(Number(value) || 0)));
 
-const progressRows = computed(() => [
-  {
-    label: "Borang checklist",
-    percent: clamp(checklistProgress.value),
-    detail: `${completedChecklist.value} of ${totalChecklist.value} completed`
-  },
-  {
-    label: "Wedding plan",
-    percent: clamp(weddingProgress.value),
-    detail: `${completedWeddingItems.value} of ${totalWeddingItems.value} completed`
-  },
-  {
-    label: "Gold savings",
-    percent: clamp(savingsProgress.value),
-    detail: `${totalGoldWeight.value.toFixed(4)}g of ${totalSavingsTarget.value}g`
-  }
-]);
+const itemStatus = (done: number, total: number, percent: number) =>
+  total === 0
+    ? { percent: null, value: "—", detail: "Nothing added yet" }
+    : { percent: clamp(percent), value: `${clamp(percent)}%`, detail: `${done} of ${total} done` };
 
-const modules: {
+const modules = computed<{
   to: string;
   title: string;
-  description: string;
   icon: IconName;
-}[] = [
+  percent: number | null;
+  value: string;
+  detail: string;
+}[]>(() => [
   {
     to: "/savings",
     title: "Gold Savings",
-    description: "Track our wedding gold contributions",
-    icon: "coins"
-  },
-  {
-    to: "/tunang",
-    title: "Tunang Planner",
-    description: "Venue, attire, hantaran, food, decor and services",
-    icon: "gem"
+    icon: "coins",
+    percent: clamp(savingsProgress.value),
+    value: `${clamp(savingsProgress.value)}%`,
+    detail: `${totalGoldWeight.value.toFixed(2)}g of ${totalSavingsTarget.value}g`
   },
   {
     to: "/checklist",
     title: "Borang Checklist",
-    description: "Nikah documents, forms and submissions",
-    icon: "checklist"
+    icon: "checklist",
+    ...itemStatus(completedChecklist.value, totalChecklist.value, checklistProgress.value)
+  },
+  {
+    to: "/tunang",
+    title: "Tunang Planner",
+    icon: "gem",
+    ...itemStatus(completedTunangItems.value, totalTunangItems.value, tunangProgress.value)
   },
   {
     to: "/nikah",
     title: "Nikah Planner",
-    description: "Hantaran, attire, decor and nikah preparation",
-    icon: "book"
+    icon: "book",
+    ...itemStatus(completedNikahItems.value, totalNikahItems.value, nikahProgress.value)
   },
   {
     to: "/wedding",
     title: "Wedding Event",
-    description: "Venue, booth, decor, doorgift and day-of services",
-    icon: "sparkles"
+    icon: "sparkles",
+    ...itemStatus(completedWeddingItems.value, totalWeddingItems.value, weddingProgress.value)
   }
-];
+]);
 </script>
 
 <style scoped>
@@ -372,39 +440,114 @@ h1 {
   letter-spacing: -0.02em;
 }
 
-/* Countdowns */
-.countdown {
+/* Hero: the wedding countdown leads, the rest supports it */
+.hero {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  isolation: isolate;
+}
+
+/* Slow ambient glow behind the number: the only looping motion on the page. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: -30% -10% 35% -10%;
+  z-index: -1;
+  background:
+    radial-gradient(40% 60% at 25% 40%, var(--ap-glow-1), transparent 70%),
+    radial-gradient(40% 60% at 75% 50%, var(--ap-glow-2), transparent 70%);
+  filter: blur(8px);
+  animation: drift 14s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  from {
+    transform: translateX(-6%) scale(1);
+  }
+  to {
+    transform: translateX(6%) scale(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero::before {
+    animation: none;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.roll {
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-milestone {
+  margin: 12px 0 0;
+  color: var(--ap-label);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.hero-main {
+  padding: 24px 20px 20px;
+}
+
+.hero-value {
+  margin: 0;
+  color: var(--ap-accent);
+  font-size: clamp(56px, 15vw, 88px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-value small {
+  margin-left: 10px;
+  color: var(--ap-label);
+  font-size: clamp(18px, 4.5vw, 24px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.hero-date {
+  margin: 10px 0 0;
+  color: var(--ap-label-2);
+  font-size: 15px;
+}
+
+.hero-side {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  box-shadow: inset 0 0.5px 0 var(--ap-separator);
 }
 
 .stat {
   display: grid;
   align-content: start;
-  gap: 4px;
-  padding: 18px 16px;
+  gap: 2px;
+  padding: 14px 20px;
 }
 
 .stat + .stat {
   box-shadow: inset 0.5px 0 0 var(--ap-separator);
 }
 
-.stat-label {
-  color: var(--ap-label-2);
-  font-size: 13px;
-  font-weight: 500;
-}
-
 .stat-value {
-  font-size: clamp(28px, 6vw, 38px);
+  font-size: 24px;
   font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-}
-
-.stat:first-child .stat-value {
-  color: var(--ap-accent);
 }
 
 .stat-value small {
@@ -417,39 +560,27 @@ h1 {
 
 .stat-note {
   color: var(--ap-label-2);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.35;
 }
 
-.note {
-  margin: -8px 4px 0;
-  color: var(--ap-label-2);
-  font-size: 17px;
-  line-height: 1.5;
-  max-width: 60ch;
+.hero-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 14px 20px 16px;
+  box-shadow: inset 0 0.5px 0 var(--ap-separator);
+  color: var(--ap-label);
+  font-size: 16px;
+  line-height: 1.45;
   text-wrap: pretty;
 }
 
-/* Progress rows */
-.progress-row {
-  display: grid;
-  gap: 8px;
-  padding: 14px 16px;
-}
-
-.progress-row + .progress-row {
-  box-shadow: inset 0 0.5px 0 var(--ap-separator);
-}
-
-.progress-row.plain {
-  gap: 2px;
-}
-
-.progress-top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+.hero-note .icon {
+  margin-top: 3px;
+  color: var(--ap-accent);
+  font-size: 16px;
 }
 
 .row-title {
@@ -471,6 +602,7 @@ h1 {
 }
 
 .bar {
+  display: block;
   height: 6px;
   border-radius: 999px;
   background: var(--ap-fill);
@@ -478,18 +610,19 @@ h1 {
 }
 
 .bar-fill {
+  display: block;
   height: 100%;
   border-radius: inherit;
   background: var(--ap-accent);
   transition: width 1s var(--ap-ease);
 }
 
-/* Planner rows */
+/* Planner rows carry their own progress */
 .module-row {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 16px;
+  padding: 14px 16px;
   color: inherit;
   text-decoration: none;
   transition: background-color 0.2s var(--ap-ease);
@@ -522,8 +655,15 @@ h1 {
 .module-text {
   display: grid;
   flex: 1;
-  gap: 1px;
+  gap: 6px;
   min-width: 0;
+}
+
+.module-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .chevron {
@@ -550,8 +690,14 @@ h1 {
     padding: 12px 16px 104px;
   }
 
-  .stat {
-    padding: 16px 12px;
+  .hero-main {
+    padding: 20px 16px 16px;
+  }
+
+  .stat,
+  .hero-note {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }
 </style>

@@ -1,11 +1,11 @@
 <template>
-  <button class="fab" @click="openModal">
+  <button ref="fabEl" class="fab" @click="openModal">
     <AppIcon name="plus" />
     <span>Quick add</span>
   </button>
 
   <div v-if="showModal" class="overlay" @click.self="closeModal">
-    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="qa-title">
+    <div ref="sheetEl" class="sheet" role="dialog" aria-modal="true" aria-labelledby="qa-title">
       <div class="sheet-header">
         <div>
           <h2 id="qa-title">Quick add</h2>
@@ -17,6 +17,7 @@
         </button>
       </div>
 
+      <form novalidate @submit.prevent="submitQuickAdd">
       <div class="field">
         <label for="qa-module">Module</label>
         <select id="qa-module" v-model="selectedModule">
@@ -119,15 +120,18 @@
         </div>
       </div>
 
-      <button class="save-btn" @click="submitQuickAdd">
-        Save to {{ moduleLabel }}
+      <p v-if="error" class="form-error" role="alert">{{ error }}</p>
+
+      <button type="submit" class="save-btn" :disabled="saving">
+        {{ saving ? "Saving…" : `Save to ${moduleLabel}` }}
       </button>
+      </form>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from "vue";
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
 
 import AppIcon from "@/components/ui/AppIcon.vue";
 import { addChecklistItem } from "@/services/checklistService";
@@ -138,6 +142,10 @@ import { addContribution } from "@/services/savingsService";
 
 const showModal = ref(false);
 const selectedModule = ref("checklist");
+const saving = ref(false);
+const error = ref("");
+const fabEl = ref<HTMLButtonElement | null>(null);
+const sheetEl = ref<HTMLElement | null>(null);
 
 const checklistForm = ref({
   category: "items",
@@ -169,31 +177,31 @@ const savingsForm = ref({
 });
 
 const tunangCategories = [
-  { key: "venue", label: "Venue Suggestion", icon: "🏛️" },
-  { key: "attire", label: "Attire", icon: "👗" },
-  { key: "hantaran_aina", label: "Hantaran Aina", icon: "🎁" },
-  { key: "hantaran_akram", label: "Hantaran Akram", icon: "🎁" },
-  { key: "food", label: "Food", icon: "🍽️" },
-  { key: "decor", label: "Decor", icon: "🌸" },
-  { key: "extra_services", label: "Extra Services", icon: "📸" }
+  { key: "venue", label: "Venue Suggestion" },
+  { key: "attire", label: "Attire" },
+  { key: "hantaran_aina", label: "Hantaran Aina" },
+  { key: "hantaran_akram", label: "Hantaran Akram" },
+  { key: "food", label: "Food" },
+  { key: "decor", label: "Decor" },
+  { key: "extra_services", label: "Extra Services" }
 ];
 
 const nikahCategories = [
-  { key: "attire", label: "Attire", icon: "👗" },
-  { key: "hantaran_aina", label: "Hantaran Aina", icon: "🎁" },
-  { key: "hantaran_akram", label: "Hantaran Akram", icon: "🎁" },
-  { key: "dulang_mas_kahwin", label: "Dulang Mas Kahwin", icon: "💍" },
-  { key: "decor", label: "Decor", icon: "🌸" },
-  { key: "extra_services", label: "Extra Services", icon: "📸" }
+  { key: "attire", label: "Attire" },
+  { key: "hantaran_aina", label: "Hantaran Aina" },
+  { key: "hantaran_akram", label: "Hantaran Akram" },
+  { key: "dulang_mas_kahwin", label: "Dulang Mas Kahwin" },
+  { key: "decor", label: "Decor" },
+  { key: "extra_services", label: "Extra Services" }
 ];
 
 const weddingCategories = [
-  { key: "venue", label: "Venue Suggestion", icon: "🏛️" },
-  { key: "attire", label: "Attire", icon: "👗" },
-  { key: "extra_booth", label: "Extra Booth", icon: "🍰" },
-  { key: "decor", label: "Decor", icon: "🌸" },
-  { key: "extra_services", label: "Extra Services", icon: "📸" },
-  { key: "doorgift", label: "Doorgift", icon: "🎁" }
+  { key: "venue", label: "Venue Suggestion" },
+  { key: "attire", label: "Attire" },
+  { key: "extra_booth", label: "Extra Booth" },
+  { key: "decor", label: "Decor" },
+  { key: "extra_services", label: "Extra Services" },
+  { key: "doorgift", label: "Doorgift" }
 ];
 
 const activeCategories = computed(() => {
@@ -214,12 +222,18 @@ watch(selectedModule, () => {
   plannerForm.value.category = activeCategories.value[0]?.key || "venue";
 });
 
-const openModal = () => {
+const openModal = async () => {
+  error.value = "";
   showModal.value = true;
+  document.body.style.overflow = "hidden";
+  await nextTick();
+  sheetEl.value?.querySelector<HTMLElement>("select, input, textarea")?.focus();
 };
 
 const closeModal = () => {
   showModal.value = false;
+  document.body.style.overflow = "";
+  fabEl.value?.focus();
 };
 
 const onKeydown = (event: KeyboardEvent) => {
@@ -227,7 +241,10 @@ const onKeydown = (event: KeyboardEvent) => {
 };
 
 onMounted(() => window.addEventListener("keydown", onKeydown));
-onUnmounted(() => window.removeEventListener("keydown", onKeydown));
+onUnmounted(() => {
+  window.removeEventListener("keydown", onKeydown);
+  document.body.style.overflow = "";
+});
 
 const resetForms = () => {
   checklistForm.value = {
@@ -261,39 +278,49 @@ const resetForms = () => {
 };
 
 const submitQuickAdd = async () => {
-  if (selectedModule.value === "checklist") {
-    if (!checklistForm.value.item.trim()) return;
-    await addChecklistItem(checklistForm.value);
+  if (saving.value) return;
+  error.value = "";
+
+  const module = selectedModule.value;
+
+  if (module === "checklist" && !checklistForm.value.item.trim()) {
+    error.value = "Enter an item name to save.";
+    return;
   }
 
-  if (selectedModule.value === "tunang") {
-    if (!plannerForm.value.name.trim()) return;
-    await addTunangItem(plannerForm.value);
+  if (
+    (module === "tunang" || module === "nikah" || module === "wedding") &&
+    !plannerForm.value.name.trim()
+  ) {
+    error.value = "Enter an item name to save.";
+    return;
   }
 
-  if (selectedModule.value === "nikah") {
-    if (!plannerForm.value.name.trim()) return;
-    await addNikahItem(plannerForm.value);
+  if (
+    module === "savings" &&
+    (!savingsForm.value.currentGoldPricePerGram || !savingsForm.value.purchasePrice)
+  ) {
+    error.value = "Enter the gold price and purchase price to save.";
+    return;
   }
 
-  if (selectedModule.value === "wedding") {
-    if (!plannerForm.value.name.trim()) return;
-    await addWeddingItem(plannerForm.value);
+  saving.value = true;
+
+  try {
+    if (module === "checklist") await addChecklistItem(checklistForm.value);
+    if (module === "tunang") await addTunangItem(plannerForm.value);
+    if (module === "nikah") await addNikahItem(plannerForm.value);
+    if (module === "wedding") await addWeddingItem(plannerForm.value);
+    if (module === "savings") await addContribution(savingsForm.value);
+
+    resetForms();
+    closeModal();
+  } catch (err) {
+    console.error("Quick add failed:", err);
+    error.value = "Couldn't save. Check your connection and try again.";
+  } finally {
+    saving.value = false;
   }
-
-  if (selectedModule.value === "savings") {
-    if (
-      !savingsForm.value.currentGoldPricePerGram ||
-      !savingsForm.value.purchasePrice
-    ) {
-      return;
-    }
-
-    await addContribution(savingsForm.value);
-  }
-
-  resetForms();
-  closeModal();
 };
 </script>
 
@@ -318,6 +345,27 @@ const submitQuickAdd = async () => {
   cursor: pointer;
   box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.35), 0 6px 20px rgba(0, 0, 0, 0.18);
   transition: transform 0.2s var(--ap-ease), box-shadow 0.2s var(--ap-ease);
+}
+
+@media (max-width: 719px) {
+  .fab {
+    right: 16px;
+    bottom: calc(max(10px, env(safe-area-inset-bottom)) + 78px);
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    padding: 0;
+  }
+
+  /* Icon-only on phones so it doesn't cover row values; the label stays for screen readers. */
+  .fab span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 .fab :deep(.icon) {
@@ -387,8 +435,9 @@ const submitQuickAdd = async () => {
   display: grid;
   place-items: center;
   flex: none;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
+  margin: -6px -6px 0 0;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -462,8 +511,19 @@ const submitQuickAdd = async () => {
   transition: transform 0.2s var(--ap-ease), opacity 0.2s var(--ap-ease);
 }
 
-.save-btn:hover {
+.save-btn:hover:not(:disabled) {
   opacity: 0.92;
+}
+
+.save-btn:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.form-error {
+  margin: 0 4px 12px;
+  color: var(--ap-red);
+  font-size: 14px;
 }
 
 .save-btn:active {

@@ -7,12 +7,29 @@
       </span>
     </div>
 
-    <p v-if="upcomingTasks.length === 0" class="empty">
+    <p v-if="loading" class="empty" role="status">Loading tasks…</p>
+
+    <p v-else-if="upcomingTasks.length === 0" class="empty">
       Nothing due. Enjoy the calm.
     </p>
 
     <ul v-else class="list">
-      <li v-for="task in upcomingTasks" :key="task.id" class="row">
+      <li
+        v-for="task in upcomingTasks"
+        :key="task.id"
+        class="row"
+        :class="{ done: pending.has(task.id) }"
+      >
+        <button
+          type="button"
+          class="check"
+          :aria-label="`Mark ${task.title} as done`"
+          :disabled="pending.has(task.id)"
+          @click="complete(task)"
+        >
+          <AppIcon name="check" />
+        </button>
+
         <div class="row-main">
           <span class="title">{{ task.title }}</span>
           <span class="meta">
@@ -24,19 +41,27 @@
         </span>
       </li>
     </ul>
+
+    <p v-if="error" class="error" role="alert">{{ error }}</p>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { useDashboard } from "@/composables/useDashboard";
+import { computed, reactive, ref } from "vue";
+import AppIcon from "@/components/ui/AppIcon.vue";
+import { useDashboardContext } from "@/composables/useDashboard";
+import { updateChecklistItem } from "@/services/checklistService";
+import { updateTunangItem } from "@/services/tunangService";
+import { updateNikahItem } from "@/services/nikahService";
+import { updateWeddingItem } from "@/services/weddingService";
 
 const {
+  loading,
   checklistItems,
   tunangItems,
   nikahItems,
   weddingItems
-} = useDashboard();
+} = useDashboardContext();
 
 const isCompleted = (item: any) => {
   return (
@@ -47,14 +72,21 @@ const isCompleted = (item: any) => {
   );
 };
 
+// "YYYY-MM-DD" as a local calendar date; `new Date("2026-12-31")` is UTC midnight
+// and can land on the previous day west of Greenwich.
+const parseLocalDate = (value: string) => {
+  const [y, m, d] = String(value).split("-").map(Number);
+  return y && m && d ? new Date(y, m - 1, d) : new Date(value);
+};
+
 const getDaysLeft = (date: string) => {
   const today = new Date();
-  const due = new Date(date);
+  const due = parseLocalDate(date);
 
   today.setHours(0, 0, 0, 0);
   due.setHours(0, 0, 0, 0);
 
-  return Math.ceil(
+  return Math.round(
     (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
   );
 };
@@ -99,6 +131,8 @@ const getStatus = (date: string) => {
 const upcomingTasks = computed(() => {
   const checklist = checklistItems.value.map((item: any) => ({
     id: `checklist-${item.id}`,
+    key: "checklist" as const,
+    rawId: item.id as string,
     title: item.item,
     dueDate: item.dueDate,
     module: "Checklist",
@@ -107,6 +141,8 @@ const upcomingTasks = computed(() => {
 
   const tunang = tunangItems.value.map((item: any) => ({
     id: `tunang-${item.id}`,
+    key: "tunang" as const,
+    rawId: item.id as string,
     title: item.name,
     dueDate: item.dueDate,
     module: "Tunang",
@@ -115,6 +151,8 @@ const upcomingTasks = computed(() => {
 
   const nikah = nikahItems.value.map((item: any) => ({
     id: `nikah-${item.id}`,
+    key: "nikah" as const,
+    rawId: item.id as string,
     title: item.name,
     dueDate: item.dueDate,
     module: "Nikah",
@@ -123,6 +161,8 @@ const upcomingTasks = computed(() => {
 
   const wedding = weddingItems.value.map((item: any) => ({
     id: `wedding-${item.id}`,
+    key: "wedding" as const,
+    rawId: item.id as string,
     title: item.name,
     dueDate: item.dueDate,
     module: "Wedding",
@@ -137,13 +177,39 @@ const upcomingTasks = computed(() => {
     }))
     .sort(
       (a, b) =>
-        new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+        parseLocalDate(a.dueDate).getTime() - parseLocalDate(b.dueDate).getTime()
     )
     .slice(0, 6);
 });
 
+// Same convention the planner pages use: completed + progress "DONE".
+const updaters = {
+  checklist: updateChecklistItem,
+  tunang: updateTunangItem,
+  nikah: updateNikahItem,
+  wedding: updateWeddingItem
+};
+
+const pending = reactive(new Set<string>());
+const error = ref("");
+
+const complete = async (task: { id: string; key: keyof typeof updaters; rawId: string; title: string }) => {
+  if (pending.has(task.id)) return;
+  error.value = "";
+  pending.add(task.id);
+
+  try {
+    await updaters[task.key](task.rawId, { completed: true, progress: "DONE" });
+    // The live listener drops the row and the dashboard progress follows.
+  } catch (err) {
+    console.error("Failed to complete task:", err);
+    pending.delete(task.id);
+    error.value = `Couldn't mark "${task.title}" as done. Try again.`;
+  }
+};
+
 const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString("en-MY", {
+  return parseLocalDate(date).toLocaleDateString("en-MY", {
     day: "numeric",
     month: "short",
     year: "numeric"
@@ -197,10 +263,10 @@ const formatDate = (date: string) => {
 }
 
 .row {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 8px;
   padding: 13px 16px;
 }
 
@@ -210,8 +276,89 @@ const formatDate = (date: string) => {
 
 .row-main {
   display: grid;
+  flex: 1;
   gap: 2px;
   min-width: 0;
+}
+
+.check {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin: -8px 0 -8px -10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: transparent;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* The visible ring is smaller than the 44px touch target. */
+.check::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--ap-label-2);
+  transition: background-color 0.25s var(--ap-ease), box-shadow 0.25s var(--ap-ease);
+}
+
+.check :deep(.icon) {
+  position: relative;
+  transform: scale(0.6);
+  opacity: 0;
+  transition: transform 0.3s var(--ap-ease), opacity 0.2s var(--ap-ease);
+}
+
+.check:hover:not(:disabled) {
+  color: var(--ap-accent);
+}
+
+.check:hover:not(:disabled)::before {
+  box-shadow: inset 0 0 0 1.5px var(--ap-accent);
+}
+
+.check:hover:not(:disabled) :deep(.icon) {
+  opacity: 0.6;
+  transform: scale(1);
+}
+
+.row.done .check {
+  color: #fff;
+}
+
+.row.done .check::before {
+  background: var(--ap-accent);
+  box-shadow: none;
+}
+
+.row.done .check :deep(.icon) {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.row.done .row-main,
+.row.done .status {
+  opacity: 0.45;
+  transition: opacity 0.3s var(--ap-ease);
+}
+
+.row.done .title {
+  text-decoration: line-through;
+}
+
+.error {
+  margin: 8px 4px 0;
+  color: var(--ap-red);
+  font-size: 14px;
 }
 
 .title {
@@ -228,6 +375,7 @@ const formatDate = (date: string) => {
 
 .status {
   flex: none;
+  margin-left: 8px;
   padding: 4px 10px;
   border-radius: 999px;
   background: var(--ap-fill);
