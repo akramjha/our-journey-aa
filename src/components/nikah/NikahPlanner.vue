@@ -8,7 +8,7 @@
     <section class="group stats" aria-label="Summary">
       <div class="stat">
         <span class="stat-label">Total budget</span>
-        <span class="stat-value"><small>RM</small>{{ totalPrice.toFixed(2) }}</span>
+        <span class="stat-value"><small>RM</small>{{ money(totalPrice) }}</span>
       </div>
 
       <div class="stat">
@@ -45,9 +45,19 @@
     <section aria-labelledby="form-title">
       <div class="section-head">
         <h2 id="form-title">{{ editId ? "Edit nikah item" : "Add nikah item" }}</h2>
+        <button
+          v-if="!editId"
+          type="button"
+          class="btn plain toggle"
+          :aria-expanded="showForm"
+          aria-controls="item-form"
+          @click="showForm = !showForm"
+        >
+          {{ showForm ? "Close" : "Add item" }}
+        </button>
       </div>
 
-      <div class="group form">
+      <div v-if="formOpen" id="item-form" ref="formEl" class="group form">
         <div class="form-grid">
           <div class="field">
             <label for="f-category">Category</label>
@@ -129,7 +139,7 @@
           {{ currentCategory?.label }}
         </h2>
         <span class="meta">
-          {{ filteredItems.length }} {{ filteredItems.length === 1 ? "item" : "items" }} · RM {{ selectedTotal.toFixed(2) }} · {{ selectedCompletionPercent }}% done
+          {{ filteredItems.length }} {{ filteredItems.length === 1 ? "item" : "items" }} · RM {{ money(selectedTotal) }} · {{ selectedCompletionPercent }}% done
         </span>
       </div>
 
@@ -183,7 +193,7 @@
           <dl class="facts">
             <div>
               <dt>Price</dt>
-              <dd>RM {{ Number(item.price || 0).toFixed(2) }}</dd>
+              <dd>RM {{ money(item.price) }}</dd>
             </div>
 
             <div>
@@ -257,7 +267,7 @@
 
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, nextTick } from "vue";
 
 import AppIcon from "@/components/ui/AppIcon.vue";
 import type { IconName } from "@/components/ui/AppIcon.vue";
@@ -273,17 +283,25 @@ import { uploadToCloudinary } from "@/services/uploadService";
 import type { NikahItem, NikahFile } from "@/types/nikah";
 
 const categories = [
-  { key: "attire", label: "Attire", icon: "👗" },
-  { key: "hantaran_aina", label: "Hantaran Aina", icon: "🎁" },
-  { key: "hantaran_akram", label: "Hantaran Akram", icon: "🎁" },
-  { key: "dulang_mas_kahwin", label: "Dulang Mas Kahwin", icon: "💍" },
-  { key: "decor", label: "Decor", icon: "🌸" },
-  { key: "extra_services", label: "Extra Services", icon: "📸" }
+  { key: "attire", label: "Attire" },
+  { key: "hantaran_aina", label: "Hantaran Aina" },
+  { key: "hantaran_akram", label: "Hantaran Akram" },
+  { key: "dulang_mas_kahwin", label: "Dulang Mas Kahwin" },
+  { key: "decor", label: "Decor" },
+  { key: "extra_services", label: "Extra Services" }
 ];
 
 const selectedCategory = ref("attire");
 const items = ref<NikahItem[]>([]);
 const editId = ref<string | null>(null);
+
+// The form stays collapsed so the item list is the first thing on the page.
+const showForm = ref(false);
+const formEl = ref<HTMLElement | null>(null);
+const formOpen = computed(() => showForm.value || editId.value !== null);
+
+const money = (value: number) =>
+  Number(value || 0).toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const form = ref<NikahItem>({
   category: "attire",
@@ -386,6 +404,7 @@ const submitItem = async () => {
     });
 
     resetForm();
+    showForm.value = false;
     return;
   }
 
@@ -412,6 +431,13 @@ const toggleCompleted = async (item: NikahItem) => {
 
 const startEdit = (item: NikahItem) => {
   editId.value = item.id || null;
+  showForm.value = true;
+
+  // The form sits above the list, so bring it into view when editing from far down.
+  nextTick(() => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    formEl.value?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+  });
 
   form.value = {
     category: item.category,
@@ -434,6 +460,7 @@ const startEdit = (item: NikahItem) => {
 
 const cancelEdit = () => {
   resetForm();
+  showForm.value = false;
 };
 
 const uploadFilesForItem = async (event: Event, item: NikahItem) => {
@@ -691,6 +718,14 @@ h2 {
 /* Form */
 .form {
   padding: 16px 16px 6px;
+}
+
+#item-form {
+  scroll-margin-top: 88px;
+}
+
+.toggle {
+  color: var(--ap-accent);
 }
 
 .form-grid {

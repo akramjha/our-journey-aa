@@ -31,7 +31,7 @@
       <ul class="list">
         <li class="row">
           <span>Total savings together</span>
-          <strong class="num">RM {{ totalSpend.toFixed(2) }}</strong>
+          <strong class="num">RM {{ money(totalSpend) }}</strong>
         </li>
         <li class="row">
           <span>Total gold together</span>
@@ -64,15 +64,15 @@
         </li>
         <li class="row">
           <span>Current gold value</span>
-          <strong class="num">RM {{ currentGoldValue.toFixed(2) }}</strong>
+          <strong class="num">RM {{ money(currentGoldValue) }}</strong>
         </li>
         <li class="row">
           <span>Total invested</span>
-          <strong class="num">RM {{ totalSpend.toFixed(2) }}</strong>
+          <strong class="num">RM {{ money(totalSpend) }}</strong>
         </li>
         <li class="row">
           <span>Growth / profit</span>
-          <strong class="num accent">RM {{ (currentGoldValue - totalSpend).toFixed(2) }}</strong>
+          <strong class="num accent">RM {{ money(currentGoldValue - totalSpend) }}</strong>
         </li>
       </ul>
     </section>
@@ -138,7 +138,7 @@
         <ul class="list totals">
           <li class="row">
             <span>Total savings</span>
-            <strong class="num">RM {{ ainaSpend.toFixed(2) }}</strong>
+            <strong class="num">RM {{ money(ainaSpend) }}</strong>
           </li>
           <li class="row">
             <span>Total gold</span>
@@ -207,7 +207,7 @@
         <ul class="list totals">
           <li class="row">
             <span>Total savings</span>
-            <strong class="num">RM {{ akramSpend.toFixed(2) }}</strong>
+            <strong class="num">RM {{ money(akramSpend) }}</strong>
           </li>
           <li class="row">
             <span>Total gold</span>
@@ -220,6 +220,9 @@
 </template>
 
 <script setup lang="ts">
+const money = (value: number) =>
+  Number(value || 0).toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 import { ref, computed, onMounted } from "vue";
 
 import AppIcon from "@/components/ui/AppIcon.vue";
