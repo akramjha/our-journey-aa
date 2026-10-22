@@ -233,6 +233,7 @@ export function useDashboard() {
     tunangProgress,
 
     budgetRows,
+    isSettled,
 
     totalSavingsTarget,
     totalSavingsCurrent,

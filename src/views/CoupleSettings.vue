@@ -40,6 +40,10 @@
               <input id="engagementDate" type="date" v-model="form.engagementDate" />
             </div>
             <div class="field">
+              <label for="nikahDate">Nikah date (optional)</label>
+              <input id="nikahDate" type="date" v-model="form.nikahDate" />
+            </div>
+            <div class="field">
               <label for="weddingDate">Wedding date</label>
               <input id="weddingDate" type="date" v-model="form.weddingDate" />
             </div>
@@ -99,6 +103,8 @@ const form = ref({
   engagementDate: "2026-06-01",
 
   weddingDate: "2026-12-31",
+
+  nikahDate: "",
 
   totalBudget: 0,
 
