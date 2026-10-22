@@ -56,9 +56,18 @@
     <section class="block" aria-labelledby="add-title">
       <div class="section-head">
         <h2 id="add-title">Add an item</h2>
+        <button
+          type="button"
+          class="toggle"
+          :aria-expanded="showForm"
+          aria-controls="item-form"
+          @click="showForm = !showForm"
+        >
+          {{ showForm ? "Close" : "Add item" }}
+        </button>
       </div>
 
-      <form class="group pad form" @submit.prevent="addItem">
+      <form v-if="showForm" id="item-form" class="group pad form" @submit.prevent="addItem">
         <div class="form-grid">
           <div class="field">
             <label for="cl-category">Category</label>
@@ -233,9 +242,9 @@ import { uploadToCloudinary } from "@/services/uploadService";
 import type { ChecklistItem, ChecklistFile } from "@/types/checklist";
 
 const categories = [
-  { key: "items", label: "Items", icon: "✅" },
-  { key: "borang_aina", label: "Borang Aina", icon: "🌸" },
-  { key: "borang_akram", label: "Borang Akram", icon: "💙" }
+  { key: "items", label: "Items" },
+  { key: "borang_aina", label: "Borang Aina" },
+  { key: "borang_akram", label: "Borang Akram" }
 ];
 
 const selectedCategory = ref("items");
@@ -294,6 +303,9 @@ const selectedCompletionPercent = computed(() => {
     (selectedCompletedCount.value / filteredItems.value.length) * 100
   );
 });
+
+// Collapsed by default so the checklist itself is the first thing on the page.
+const showForm = ref(false);
 
 const addItem = async () => {
   if (!form.value.item.trim()) return;
@@ -446,6 +458,23 @@ h1 {
 
 .group.pad {
   padding: 16px;
+}
+
+.toggle {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--ap-accent);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--ap-accent);
+  outline-offset: 2px;
 }
 
 .section-head {
